@@ -1,0 +1,2570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Python Studio</title>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CodeMirror 5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <!-- Brython Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.13.0/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.13.0/brython_stdlib.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #06080e;
+            --bg-secondary: #0c1017;
+            --bg-tertiary: #141b27;
+            --bg-card: rgba(20, 27, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            
+            --accent-emerald: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-rose: #f43f5e;
+            --accent-amber: #f59e0b;
+            
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dim: #4b5563;
+            
+            --font-code: 'Fira Code', monospace;
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --sidebar-width: 330px;
+            --drawer-width: 380px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 45%);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-emerald); }
+
+        #app { display: flex; flex-direction: column; height: 100vh; position: relative; }
+
+        header {
+            height: 58px;
+            background: rgba(12, 16, 23, 0.9);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--accent-emerald);
+            color: var(--accent-emerald);
+            border-radius: 12px;
+            -webkit-text-fill-color: initial;
+            font-weight: 600;
+        }
+
+        .progress-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-track {
+            width: 120px;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 8%;
+            background: linear-gradient(90deg, var(--accent-emerald), var(--accent-cyan));
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hamburger-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .hamburger-btn:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--accent-emerald);
+            color: var(--accent-emerald);
+            transform: scale(1.05);
+        }
+
+        .hamburger-btn .badge-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-rose);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-rose);
+        }
+
+        main { display: flex; flex: 1; height: calc(100vh - 58px); position: relative; }
+
+        aside {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+            z-index: 80;
+        }
+
+        .search-box { padding: 12px; border-bottom: 1px solid var(--border-color); }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 12px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .search-input-wrapper input {
+            width: 100%;
+            padding: 8px 12px 8px 34px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.82rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input-wrapper input:focus { border-color: var(--accent-emerald); }
+
+        .curriculum-tree { flex: 1; overflow-y: auto; padding: 10px; }
+
+        .chapter-group {
+            margin-bottom: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid transparent;
+        }
+
+        .chapter-group.active {
+            border-color: rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.02);
+        }
+
+        .chapter-header {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .chapter-header:hover { background: rgba(255, 255, 255, 0.03); }
+
+        .chapter-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chapter-title i { color: var(--accent-emerald); font-size: 0.8rem; }
+
+        .topic-list {
+            display: none;
+            padding: 4px 0 6px 12px;
+            border-left: 1px solid rgba(16, 185, 129, 0.15);
+            margin-left: 18px;
+        }
+
+        .chapter-group.open .topic-list { display: block; }
+
+        .topic-item {
+            padding: 7px 10px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            margin: 2px 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .topic-item:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.04); }
+
+        .topic-item.active {
+            color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.12);
+            font-weight: 600;
+        }
+
+        .workspace-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+
+        .topic-banner {
+            padding: 14px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .banner-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .topic-info h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .topic-info p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .action-toolbar { display: flex; align-items: center; gap: 8px; }
+
+        .btn {
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-emerald), #059669);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35); }
+
+        .btn-animation {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--accent-purple);
+            color: #c4b5fd;
+        }
+
+        .btn-animation:hover { background: rgba(139, 92, 246, 0.25); box-shadow: 0 0 12px rgba(139, 92, 246, 0.3); }
+
+        .zero-basis-box {
+            background: rgba(6, 182, 212, 0.06);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: #a5f3fc;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+        }
+
+        .zero-basis-box i { color: var(--accent-cyan); font-size: 1rem; margin-top: 2px; }
+
+        .keyword-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+            align-items: center;
+        }
+
+        .keyword-tag {
+            font-family: var(--font-code);
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: var(--accent-emerald);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .keyword-tag:hover {
+            background: var(--accent-emerald);
+            color: #000;
+        }
+
+        .split-pane { flex: 1; display: flex; overflow: hidden; }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .editor-header {
+            height: 36px;
+            background: rgba(12, 16, 23, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .CodeMirror {
+            flex: 1;
+            height: 100% !important;
+            font-family: var(--font-code) !important;
+            font-size: 13.5px !important;
+            line-height: 1.6 !important;
+            background: #080b12 !important;
+        }
+
+        .feedback-container {
+            width: 46%;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .tab-nav {
+            display: flex;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            padding: 9px 16px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--accent-emerald);
+            border-bottom-color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.04);
+        }
+
+        .tab-content {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tab-content.active { display: flex; }
+
+        .terminal-output {
+            flex: 1;
+            padding: 14px;
+            font-family: var(--font-code);
+            font-size: 0.8rem;
+            color: var(--text-main);
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background: #04060a;
+        }
+
+        .term-line { margin-bottom: 4px; line-height: 1.5; }
+        .term-success { color: var(--accent-emerald); }
+        .term-error { color: var(--accent-rose); background: rgba(244, 63, 94, 0.08); padding: 4px 8px; border-radius: 4px; border-left: 2px solid var(--accent-rose); }
+        .term-info { color: var(--accent-cyan); }
+        .term-system { color: var(--text-dim); font-style: italic; }
+
+        .visualizer-pane {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #06080e;
+        }
+
+        .state-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .state-card-title {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .variable-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+        }
+
+        .var-badge {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .var-badge::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0; width: 3px;
+            background: var(--accent-emerald);
+        }
+
+        .var-name { font-family: var(--font-code); font-size: 0.75rem; color: var(--accent-cyan); }
+        .var-val { font-family: var(--font-code); font-size: 0.82rem; font-weight: 600; color: #fff; }
+        .var-type { font-size: 0.65rem; color: var(--text-dim); }
+
+        .line-by-line-card {
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            color: #ddd6fe;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .line-explain-item {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+        .line-explain-item:last-child { border-bottom: none; margin-bottom: 0; }
+        .line-code-snippet {
+            font-family: var(--font-code);
+            color: var(--accent-emerald);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: var(--drawer-width);
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            z-index: 201;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .drawer-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-emerald);
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+
+        .drawer-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-primary);
+        }
+
+        .drawer-tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .drawer-tab-btn.active {
+            color: var(--accent-emerald);
+            border-bottom-color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .drawer-tab-pane { display: none; }
+        .drawer-tab-pane.active { display: block; }
+
+        .dictionary-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .dict-word-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .dict-word {
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .dict-pronounce {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .dict-meaning {
+            font-size: 0.8rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .dict-usage {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px 8px;
+            border-radius: 4px;
+            border-left: 2px solid var(--accent-emerald);
+        }
+
+        @media (max-width: 900px) {
+            aside { position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); }
+            aside.mobile-open { transform: translateX(0); }
+            .split-pane { flex-direction: column; }
+            .feedback-container { width: 100%; height: 50%; }
+            .drawer { width: 100%; }
+        }
+    </style>
+</head>
+<body onload="brython(1)">
+    <div id="app">
+        <!-- 顶部导航栏 -->
+        <header>
+            <div class="brand">
+                <i class="fa-solid fa-terminal"></i>
+                <span>PYTHON STUDIO</span>
+                <span class="brand-badge">Gator</span>
+            </div>
+
+            <div class="progress-bar-container">
+                <span style="font-size: 0.72rem; color: var(--text-muted);"></span>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-emerald);" id="progress-text">1 / 13</span>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="hamburger-btn" id="hamburger-btn" onclick="toggleDrawer()" title="工具箱">
+                    <i class="fa-solid fa-bars"></i>
+                    <div class="badge-dot"></div>
+                </button>
+            </div>
+        </header>
+
+        <!-- 主工作区 -->
+        <main>
+            <!-- 左侧 13 章节结构化目录 -->
+            <aside id="sidebar">
+                <div class="search-box">
+                    <div class="search-input-wrapper">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-input" placeholder="搜索 13 章节语法、语法点..." oninput="filterTopics()">
+                    </div>
+                </div>
+
+                <div class="curriculum-tree" id="curriculum-tree">
+                    <!-- 动态渲染 13 章节 -->
+                </div>
+            </aside>
+
+            <!-- 中间 & 右侧主代码体验区 -->
+            <section class="workspace-content">
+                <div class="topic-banner">
+                    <div class="banner-top">
+                        <div class="topic-info">
+                            <h1 id="current-title"><i class="fa-solid fa-code" style="color:var(--accent-emerald);"></i> 1.1 变量与赋值 (Variable & Assignment)</h1>
+                            <p id="current-desc">把变量想象成一个贴了标签的“收纳盒”。赋值就是把数据放入盒子的过程。</p>
+                        </div>
+
+                        <div class="action-toolbar">
+                            <button class="btn btn-animation" id="btn-animate" onclick="playDynamicAnimation()">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> 动态输入与反馈演示
+                            </button>
+                            <button class="btn btn-primary" id="btn-run" onclick="runPythonCode()">
+                                <i class="fa-solid fa-play"></i> 运行代码
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="zero-basis-box">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <div>
+                            <div id="analogy-text"><strong></strong> 在 Python 里，`x = 10` 不是数学里的“x 等于 10”，而是“把数字 10 放到名为 x 的收纳盒里”。</div>
+                            <div class="keyword-pills" id="keyword-pills">
+                                <!-- 动态插入本节关键单词标签 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="split-pane">
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <span><i class="fa-regular fa-file-code"></i> main.py</span>
+                            <span id="editor-status"><i class="fa-solid fa-circle-check" style="color:var(--accent-emerald);"></i> 就绪</span>
+                        </div>
+                        <textarea id="code-editor"></textarea>
+                    </div>
+
+                    <div class="feedback-container">
+                        <div class="tab-nav">
+                            <div class="tab-btn active" onclick="switchTab('terminal')">
+                                <i class="fa-solid fa-terminal"></i> 运行终端 (Output)
+                            </div>
+                            <div class="tab-btn" onclick="switchTab('visualizer')">
+                                <i class="fa-solid fa-microchip"></i> 内存与逐行手把手拆解
+                            </div>
+                        </div>
+
+                        <div class="tab-content active" id="tab-terminal">
+                            <div class="terminal-output" id="terminal-out">
+                                <div class="term-line term-system">◆ Python Cyber Engine v2026 已就绪</div>
+                                <div class="term-line term-system">◆ 点击「动态输入与反馈演示」可观察代码一行行输入的运行效果</div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-visualizer">
+                            <div class="visualizer-pane">
+                                <div class="line-by-line-card" id="line-by-line-card">
+                                    <div style="font-weight: 700; margin-bottom: 8px; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px;">
+                                        <i class="fa-solid fa-chalkboard-user"></i> 本段代码逐行教学解析：
+                                    </div>
+                                    <div id="line-by-line-content">
+                                        <!-- 动态插入逐行解析 -->
+                                    </div>
+                                </div>
+
+                                <div class="state-card">
+                                    <div class="state-card-title">
+                                        <span>内存变量监视器 (Variables in RAM)</span>
+                                        <i class="fa-solid fa-memory" style="color:var(--accent-emerald)"></i>
+                                    </div>
+                                    <div class="variable-grid" id="variable-grid">
+                                        <!-- 动态插入变量 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 抽屉界面 -->
+        <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+        <div class="drawer" id="drawer">
+            <div class="drawer-header">
+                <div class="drawer-title">
+                    <i class="fa-solid fa-cubes"></i> 工具箱
+                </div>
+                <button class="close-btn" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="drawer-tabs">
+                <div class="drawer-tab-btn active" onclick="switchDrawerTab('dict')">词典</div>
+                <div class="drawer-tab-btn" onclick="switchDrawerTab('cheatsheet')">速查</div>
+                <div class="drawer-tab-btn" onclick="switchDrawerTab('notes')">笔记/错题</div>
+                <div class="drawer-tab-btn" onclick="switchDrawerTab('ai')">AI 助教</div>
+            </div>
+
+            <div class="drawer-content">
+                <!-- 词典 -->
+                <div class="drawer-tab-pane active" id="drawer-pane-dict">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+                        收集了全套课程中每一个关键字的英文全称、中文释义与用法：
+                    </div>
+                    <div id="dictionary-list">
+                        <!-- 动态渲染词典列表 -->
+                    </div>
+                </div>
+
+                <!-- 联动速查 -->
+                <div class="drawer-tab-pane" id="drawer-pane-cheatsheet">
+                    <div style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-compass"></i> 本节重难点与易错避坑 (随目录联动)
+                    </div>
+                    <div id="cheatsheet-content">
+                        <!-- 动态插入当前章节速查数据 -->
+                    </div>
+                </div>
+
+                <!-- 替换后的笔记/错题本功能 -->
+                <div class="drawer-tab-pane" id="drawer-pane-notes">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span id="note-topic-label">📝 当前节点随堂笔记与错题记录</span>
+                    </div>
+                    <textarea id="topic-note-input" placeholder="在此记录当前章节的难点心得、易错代码或疑问..." style="width: 100%; height: 110px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); padding: 8px; font-size: 0.78rem; font-family: var(--font-sans); outline: none; resize: vertical; margin-bottom: 8px;"></textarea>
+                    <button class="btn btn-primary" onclick="saveTopicNote()" style="width: 100%; justify-content: center; margin-bottom: 14px;">
+                        <i class="fa-solid fa-floppy-disk"></i> 保存本节笔记/错题
+                    </button>
+
+                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--accent-amber); margin-bottom: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                        <i class="fa-solid fa-book-bookmark"></i> 已记录笔记的章节列表:
+                    </div>
+                    <div id="saved-notes-list">
+                        <!-- 动态加载保存的笔记 -->
+                    </div>
+                </div>
+
+                <!-- 联动 AI 助教 -->
+                <div class="drawer-tab-pane" id="drawer-pane-ai">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-emerald); padding: 10px; border-radius: 8px; font-size: 0.78rem; line-height: 1.5;">
+                            <strong style="color: var(--accent-emerald);"><i class="fa-solid fa-robot"></i> 智能 AI 助教：</strong><br>
+                            <span id="ai-topic-title" style="color: var(--accent-cyan); font-weight: 600;">正在辅导当前章节</span><br>
+                            随时点击下方针对本节难点的问题，或自由提问！
+                        </div>
+
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">💡 本节常见疑问 (点击快速提问)：</div>
+                        <div id="ai-quick-questions">
+                            <!-- 动态问答按钮 -->
+                        </div>
+
+                        <div style="display: flex; gap: 6px; margin-top: 4px;">
+                            <input type="text" id="ai-custom-input" placeholder="输入你想请教 AI 的问题..." style="flex: 1; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); padding: 6px 10px; font-size: 0.75rem; outline: none;">
+                            <button class="btn btn-primary" onclick="askCustomAi()" style="padding: 6px 10px; font-size: 0.75rem;">提问</button>
+                        </div>
+                        
+                        <div id="ai-response-box" style="margin-top: 6px; font-size: 0.78rem; color: #d1d5db; line-height: 1.5; background: #04060a; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局核心词汇大辞典
+        const pythonGlossary = {
+            "print": { pronounce: "普润特", meaning: "打印 / 输出", usage: "把括号里的内容显示在控制台屏幕上。" },
+            "input": { pronounce: "因普特", meaning: "输入 / 获取键盘输入", usage: "等待用户在键盘上敲入文字。" },
+            "str": { pronounce: "丝特尔 (string 的缩写)", meaning: "字符串 (文本文字)", usage: "用引号包裹起来的文字，如 'hello'。" },
+            "int": { pronounce: "因特 (integer 的缩写)", meaning: "整数", usage: "没有小数点的纯整数，如 10, -5。" },
+            "float": { pronounce: "福洛特", meaning: "浮点数 (小数)", usage: "带有小数点的数字，如 3.14, 0.5。" },
+            "bool": { pronounce: "布尔 (boolean 的缩写)", meaning: "布尔值 (真/假)", usage: "只有两个值：True (真) 或 False (假)。" },
+            "if": { pronounce: "伊夫", meaning: "如果", usage: "条件分支：如果某个条件成立，就执行对应的代码。" },
+            "elif": { pronounce: "伊利夫 (else if 的缩写)", meaning: "否则如果", usage: "当上一个 if 条件不满足时，接着检查这个条件。" },
+            "else": { pronounce: "埃尔斯", meaning: "否则", usage: "当前面的条件全都不满足时，执行这里。" },
+            "for": { pronounce: "佛", meaning: "对于...循环遍历", usage: "用来一个个取出序列里的元素并重复执行代码。" },
+            "in": { pronounce: "因", meaning: "在...里面", usage: "检查某个元素是否在序列中，或者配合 for 遍历。" },
+            "range": { pronounce: "润吉", meaning: "范围序列", usage: "生成一段连续的整数数字序列，如 range(5)。" },
+            "while": { pronounce: "外尔", meaning: "当...的时候循环", usage: "只要条件满足，就一直重复循环执行。" },
+            "break": { pronounce: "不瑞克", meaning: "打断 / 立即跳出循环", usage: "直接终止整个循环逻辑。" },
+            "match": { pronounce: "麦奇", meaning: "模式匹配", usage: "Python 3.10+ 引进的多路条件匹配关键字。" },
+            "def": { pronounce: "蒂夫 (define 的缩写)", meaning: "定义函数", usage: "用来创建一个可以重复调用的代码块 (函数)。" },
+            "return": { pronounce: "瑞特恩", meaning: "返回结果", usage: "让函数执行完毕后，把计算出的结果传递出来。" },
+            "lambda": { pronounce: "姆达", meaning: "匿名函数", usage: "单行的极简表达函数。" },
+            "import": { pronounce: "因波特", meaning: "导入模块", usage: "把别人写好的工具包引入到自己的程序里。" },
+            "with": { pronounce: "维斯", meaning: "上下文管理", usage: "自动安全打开和关闭文件等资源。" },
+            "try": { pronounce: "揣", meaning: "尝试执行", usage: "用来包裹可能发生报错的代码块。" },
+            "except": { pronounce: "克塞普特", meaning: "捕获异常", usage: "当 try 内代码发生错误时执行处理方案。" },
+            "class": { pronounce: "克拉斯", meaning: "类 (面向对象模板)", usage: "用来定义对象的蓝图或结构。" },
+            "yield": { pronounce: "伊尔德", meaning: "生成 / 产出", usage: "用于生成器函数逐个产出数据。" },
+            "async": { pronounce: "埃辛克", meaning: "异步关键字", usage: "声明一个异步协程函数。" }
+        };
+
+        // 扩充后的全套 13 章节数据源 (附带精准速查与 AI 助教数据)
+        const curriculumData = [
+            {
+                id: 1,
+                title: "第 1 部分：Python 基础语法",
+                topics: [
+                    {
+                        id: "1-1",
+                        name: "1.1 变量与赋值 (Variable & Assignment)",
+                        desc: "理解变量定义、动态类型绑定与内存存放。",
+                        analogy: "💡 变量就像贴了标签的收纳盒。赋值 `=` 就是把数据装进盒子里的动作。",
+                        keywords: ["print"],
+                        code: "# 1. 创建变量并赋值\nbox_number = 10\nbox_text = 'Cyber Studio'\n\n# 2. 打印输出变量内容\nprint(box_number)\nprint(box_text)\n\n# 3. 更新变量里的值\nbox_number = box_number + 5\nprint(box_number)",
+                        lineByLine: [
+                            { code: "box_number = 10", explain: "拿一个叫 `box_number` 的盒，把整数 `10` 放进去。" },
+                            { code: "box_text = 'Cyber Studio'", explain: "拿一个叫 `box_text` 的盒，把字符串放进去。" },
+                            { code: "print(box_number)", explain: "用 `print()` 单词把盒子里面的值 `10` 显示在屏幕上。" },
+                            { code: "box_number = box_number + 5", explain: "拿出 10 加上 5 变成 15，重新放回盒子中。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：赋值符号含义", content: "Python 中的 <code>=</code> 表示**赋值**（将右侧值绑定到左侧变量名），并非数学上的相等判断。" },
+                            { type: "error", title: "易错点：使用未定义的变量", content: "报错 <code>NameError: name 'x' is not defined</code>。原因：直接使用未事先赋值的变量。" }
+                        ],
+                        aiQuestions: [
+                            { q: "为什么 box_number = box_number + 5 可以运行？", a: "Python 会先计算右边的 10 + 5 等于 15，然后把计算结果重新存回左边的 box_number 变量盒子里。" },
+                            { q: "变量名命名有什么易错的禁忌？", a: "不能以数字开头（如 1num），不能使用 Python 保留关键字（如 print、if、for），区分大小写。" }
+                        ]
+                    },
+                    {
+                        id: "1-2",
+                        name: "1.2 基本数据类型 (int/float/str/bool)",
+                        desc: "掌握 int, float, str, bool 等核心数据类型。",
+                        analogy: "💡 盒子里能装不同种类的东西：整数像硬币，文本像信件，布尔值像电源开关。",
+                        keywords: ["int", "float", "str", "bool", "print"],
+                        code: "age = 18             # int (整数)\nheight = 1.75        # float (小数)\nname = 'Alice'       # str (字符串)\nis_student = True    # bool (布尔值)\n\nprint(type(age))\nprint(type(height))\nprint(type(name))\nprint(type(is_student))",
+                        lineByLine: [
+                            { code: "age = 18", explain: "整数类型 (int)，没有任何小数点。" },
+                            { code: "height = 1.75", explain: "浮点数类型 (float)，带有小数点的数字。" },
+                            { code: "name = 'Alice'", explain: "字符串类型 (str)，必须用单引号或双引号包裹。" },
+                            { code: "is_student = True", explain: "布尔类型 (bool)，只有 True (真) 或 False (假)。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：type() 查看类型", content: "通过 <code>type(变量)</code> 可以获取该变量在内存中的数据类型。" },
+                            { type: "error", title: "易错点：字符串与数字直接相加", content: "报错 <code>TypeError: can only concatenate str (not 'int') to str</code>。如 <code>'10' + 5</code> 会引发类型错误。" }
+                        ],
+                        aiQuestions: [
+                            { q: "为什么 10 和 '10' 是完全不一样的？", a: "10 是纯数字 (int)，可以做数学加减法；而 '10' 是被引号包裹的字符串 (str)，属于文本数据。" },
+                            { q: "True 和 False 拼写有什么注意点？", a: "Python 中的布尔值 True 和 False 首字母**必须大写**！小写的 true 或 false 会引发 NameError。" }
+                        ]
+                    },
+                    {
+                        id: "1-3",
+                        name: "1.3 类型转换与动态类型特性",
+                        desc: "进行数据类型强转，理解 Python 变量类型的动态变化。",
+                        analogy: "💡 就像把文字数字 '128' 经过机器加工变成可以做加减法的纯数字 128。",
+                        keywords: ["str", "int", "print"],
+                        code: "num_str = '100'\nnum_int = int(num_str)  # 转化为整数\n\nprint('翻倍结果:', num_int * 2)\n\n# 动态类型特性：同一个变量可以重新指向不同数据类型\nx = 10\nprint('初始:', type(x))\nx = 'Hello'\nprint('变化后:', type(x))",
+                        lineByLine: [
+                            { code: "int(num_str)", explain: "用 `int()` 命令把文本 `'100'` 转换成数字 `100`。" },
+                            { code: "x = 'Hello'", explain: "Python 的变量不需要固定类型，随时可重新赋值为其他类型。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：强转函数 int()/str()/float()", content: "用函数转换数据形态，如 <code>str(10)</code> 得到 <code>'10'</code>。" },
+                            { type: "error", title: "易错点：将非数字字符串转整数", content: "报错 <code>ValueError: invalid literal for int() with base 10</code>。如 <code>int('abc')</code> 转换失败。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是 Python 的动态类型特性？", a: "变量在创建时不需要指定数据类型，同一个变量名可以随时重新赋值为字符串、数字或其它类型。" }
+                        ]
+                    },
+                    {
+                        id: "1-4",
+                        name: "1.4 运算符 (算术、比较、逻辑)",
+                        desc: "熟练使用算术 (+,-,*,/)、比较 (==, !=) 和逻辑 (and, or, not) 运算。",
+                        analogy: "💡 就像做逻辑判断题：满足所有条件用 and，满足任意一个条件用 or。",
+                        keywords: ["bool", "print"],
+                        code: "a = 10\nb = 20\n\n# 比较运算符\nis_equal = (a == b)\n\n# 逻辑运算符\nis_valid = (a < 15) and (b > 15)\n\nprint('a 是否等于 b:', is_equal)\nprint('逻辑组合条件判断结果:', is_valid)",
+                        lineByLine: [
+                            { code: "a == b", explain: "`==` 用于判断两边是否相等，结果为 True 或 False。" },
+                            { code: "and", explain: "逻辑与运算符，两边条件同时成立才为真。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：赋值与比较符号区别", content: "<code>=</code> 用于赋值，<code>==</code> 用于比较两边的值是否相等。" },
+                            { type: "error", title: "易错点：除法 / 与整除 // 混淆", content: "<code>5 / 2</code> 结果为 <code>2.5</code> (float)；<code>5 // 2</code> 结果为 <code>2</code> (整数向下取整)。" }
+                        ],
+                        aiQuestions: [
+                            { q: "and 和 or 的短路求值逻辑是什么？", a: "and 遇到第一个 False 就立即停止计算返回 False；or 遇到第一个 True 就立即停止计算返回 True。" }
+                        ]
+                    },
+                    {
+                        id: "1-5",
+                        name: "1.5 输入输出与 PEP 8 风格指南",
+                        desc: "使用 input()/print() 交互，规范 PEP 8 代码格式。",
+                        analogy: "💡 PEP 8 就像是代码界的《交通规则》，规范缩进与变量命名规范。",
+                        keywords: ["input", "print"],
+                        code: "# 符合 PEP 8 规范的蛇形命名法 (snake_case)\nuser_name = '极客选手'\nprint(f'欢迎入驻 Python Cyber Studio, {user_name}!')",
+                        lineByLine: [
+                            { code: "user_name = ...", explain: "Python 推荐使用小写字母 + 下划线连接变量名。" },
+                            { code: "f'欢迎...{user_name}'", explain: "f-string 是最优雅的字符串格式化方式。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：input() 返回类型恒为 str", content: "无论你在键盘上输入的是数字还是字符，<code>input()</code> 拿到的结果全是字符串！" },
+                            { type: "error", title: "易错点：直接将 input() 用于算术运算", content: "如 <code>age = input('输入年龄'); age + 1</code> 会报错，必须先用 <code>int(input())</code> 强转。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是 PEP 8 蛇形命名法？", a: "单词全小写，中间用下划线分割，如 user_age、max_score，提高代码可读性。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "第 2 部分：流程控制",
+                topics: [
+                    {
+                        id: "2-1",
+                        name: "2.1 条件判断 (if / elif / else)",
+                        desc: "让程序根据不同条件做出自主选择。",
+                        analogy: "💡 就像路口的红绿灯：如果是绿灯就通行，如果是黄灯就减速，否则停止。",
+                        keywords: ["if", "elif", "else", "print"],
+                        code: "score = 85\n\nif score >= 90:\n    print('优秀！级别: A')\nelif score >= 80:\n    print('良好！级别: B')\nelse:\n    print('还需要努力！级别: C')",
+                        lineByLine: [
+                            { code: "if score >= 90:", explain: "检查条件：如果分数大于等于 90 分。" },
+                            { code: "elif score >= 80:", explain: "否则如果：分数大于等于 80 分。" },
+                            { code: "else:", explain: "否则：上述条件都不满足时执行这里。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：冒号与 4 空格缩进", content: "每一个 <code>if/elif/else</code> 行尾必须有冒号 <code>:</code>，下一句代码必须缩进 4 个空格。" },
+                            { type: "error", title: "易错点：缩进不一致 IndentationError", content: "混用 Tab 和空格或者缺少缩进，Python 解释器直接报错拒绝运行。" }
+                        ],
+                        aiQuestions: [
+                            { q: "多个独立的 if 与 elif 有什么区别？", a: "多个 if 会逐个全部检查；而 elif 是互斥的，只要前面某个条件成立，后续的 elif 全部跳过。" }
+                        ]
+                    },
+                    {
+                        id: "2-2",
+                        name: "2.2 循环结构 (for / while)",
+                        desc: "使用 for 和 while 遍历序列或执行重复任务。",
+                        analogy: "💡 就像操场跑步跑圈：告诉程序跑 5 圈，它就会精准重复执行 5 次。",
+                        keywords: ["for", "in", "range", "while", "print"],
+                        code: "# for 循环\nfor i in range(3):\n    print(f'for 循环第 {i+1} 次')\n\n# while 循环\ncount = 3\nwhile count > 0:\n    print(f'while 倒计时: {count}')\n    count -= 1",
+                        lineByLine: [
+                            { code: "for i in range(3):", explain: "`range(3)` 生成 0, 1, 2，`i` 依次获取它们。" },
+                            { code: "while count > 0:", explain: "只要 count 大于 0 就不断重复运行。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：range(start, stop) 左闭右开", content: "<code>range(1, 5)</code> 只会生成 <code>1, 2, 3, 4</code>，不包含结尾的 5！" },
+                            { type: "error", title: "易错点：while 循环忘记更新条件变量", content: "引发死循环 (Infinite Loop)，耗尽 CPU 资源导致程序卡死。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么时候用 for？什么时候用 while？", a: "知道明确循环次数时优先用 for；不知道循环次数但知道结束条件时用 while。" }
+                        ]
+                    },
+                    {
+                        id: "2-3",
+                        name: "2.3 循环控制 (break / continue / pass)",
+                        desc: "灵活操控循环的打断与跳过。",
+                        analogy: "💡 continue 相当于跳过今天的训练，break 相当于直接退赛。",
+                        keywords: ["for", "break", "print"],
+                        code: "for num in range(1, 6):\n    if num == 3:\n        print('跳过 3 (continue)')\n        continue\n    if num == 5:\n        print('到达 5，终止整个循环 (break)')\n        break\n    print('当前数字:', num)",
+                        lineByLine: [
+                            { code: "continue", explain: "跳过本次循环剩余代码，直接进入下一次循环。" },
+                            { code: "break", explain: "直接中断并退出当前整个循环体。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：break 与 continue 作用域", content: "只对包裹它们的最内层循环起作用。" },
+                            { type: "error", title: "易错点：在 break 后面写不可达代码", content: "写在 <code>break</code> 之后的同级代码永远不会被执行到。" }
+                        ],
+                        aiQuestions: [
+                            { q: "pass 关键字是用来干嘛的？", a: "pass 是一个空占位符，用来保持代码语法结构完整，没有任何实际动作。" }
+                        ]
+                    },
+                    {
+                        id: "2-4",
+                        name: "2.4 结构化模式匹配 (match / case)",
+                        desc: "Python 3.10+ 引进的现代化分支匹配。",
+                        analogy: "💡 类似于多路分拣管道，把包裹投递到精准匹配的接收盒中。",
+                        keywords: ["match", "print"],
+                        code: "# Python 3.10+ match 模式匹配\nstatus_code = 200\n\nmatch status_code:\n    case 200:\n        print('成功 HTTP 200 OK')\n    case 404:\n        print('未找到资源 404 Not Found')\n    case _:\n        print('未知响应')",
+                        lineByLine: [
+                            { code: "match status_code:", explain: "比对 status_code 的具体值。" },
+                            { code: "case _:", explain: "通配符 `_` 表示匹配其他所有情况。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：通配符 case _", content: "类似于 else，用来匹配前面条件全未中的默认情况。" },
+                            { type: "error", title: "易错点：低版本 Python 运行报错", content: "Python 3.10 以下版本不支持 <code>match-case</code> 语法，会报 SyntaxError。" }
+                        ],
+                        aiQuestions: [
+                            { q: "case _ 必须放在最后面吗？", a: "必须放在最后，因为它能匹配任何值。如果放在前面，后面的 case 将永远失效。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "第 3 部分：常用数据结构",
+                topics: [
+                    {
+                        id: "3-1",
+                        name: "3.1 字符串切片与 UTF-8 编码",
+                        desc: "对字符串进行切片、拼接、格式化与编码。",
+                        analogy: "💡 切片就像切吐司面包，指定切片起点和终点即可截取特定内容。",
+                        keywords: ["str", "print"],
+                        code: "text = 'PythonStudio'\n\n# 切片 [start:stop:step]\nsub_text = text[0:6]\nprint('截取前6字符:', sub_text)\n\n# 逆序字符串\nreversed_text = text[::-1]\nprint('反转文本:', reversed_text)",
+                        lineByLine: [
+                            { code: "text[0:6]", explain: "截取索引 0 到 5 的字符 (左闭右开区间)。" },
+                            { code: "text[::-1]", explain: "步长 `-1` 实现快速字符串反转。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：字符串不可变性 (Immutable)", content: "字符串创建后不能直接修改其中某个字符，如 <code>s[0]='a'</code> 会报错。" },
+                            { type: "error", title: "易错点：索引越界 IndexError", content: "直接访问超出长度的单索引 <code>s[100]</code> 会报错，但切片 <code>s[0:100]</code> 不会报错。" }
+                        ],
+                        aiQuestions: [
+                            { q: "如何用切片反转一个字符串？", a: "使用 `text[::-1]`，第三个参数 `-1` 表示反向跨步。" }
+                        ]
+                    },
+                    {
+                        id: "3-2",
+                        name: "3.2 列表 List 与列表推导式",
+                        desc: "动态增删改查列表，掌握高效列表推导式。",
+                        analogy: "💡 列表就像是可任意伸缩的货架，能随时摆放或移走物品。",
+                        keywords: ["for", "in", "print"],
+                        code: "nums = [1, 2, 3, 4, 5]\n\n# 列表推导式生成偶数平方\neven_squares = [x**2 for x in nums if x % 2 == 0]\nprint('偶数平方和列表:', even_squares)",
+                        lineByLine: [
+                            { code: "[x**2 for x in nums...]", explain: "列表推导式用单行极简语法完成遍历过滤与运算生成。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：append() 原地修改", content: "<code>list.append()</code> 返回值是 <code>None</code>，千万不要写出 <code>a = a.append(1)</code>。" },
+                            { type: "error", title: "易错点：遍历列表的同时删除元素", content: "边遍历边 <code>remove</code> 会导致索引错乱漏掉元素，推荐用列表推导式生成新列表。" }
+                        ],
+                        aiQuestions: [
+                            { q: "为什么 my_list = my_list.append(5) 会让列表变成 None？", a: "append() 是原地修改方法，它的返回值是 None。重新赋值会导致原列表被 None 覆盖。" }
+                        ]
+                    },
+                    {
+                        id: "3-3",
+                        name: "3.3 元组 Tuple 与集合 Set",
+                        desc: "不可变容器 Tuple 与元素去重交并集 Set。",
+                        analogy: "💡 元组就像密封投递的证书不可更改；集合就像不重复的抽奖箱。",
+                        keywords: ["print"],
+                        code: "# 元组 (不可变)\npoint = (10, 20)\n\n# 集合 (自动去重)\nraw_list = [1, 2, 2, 3, 3, 3]\nunique_set = set(raw_list)\nprint('去重后的集合:', unique_set)",
+                        lineByLine: [
+                            { code: "set(raw_list)", explain: "自动清除重复项，只保留唯一的元素。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：单元素元组写法", content: "定义单个元素的元组必须加逗号，如 <code>t = (1,)</code>，否则 <code>(1)</code> 会被认为是整数数字。" },
+                            { type: "error", title: "易错点：尝试给 Set 存不可哈希的对象", content: "Set 内部元素必须是不可变的（如数字、字符串、元组），存 List 会报 <code>TypeError: unhashable type: 'list'</code>。" }
+                        ],
+                        aiQuestions: [
+                            { q: "元组和列表到底有什么本质区别？", a: "列表用 []，元素可随意增删改；元组用 ()，创建后安全只读不可修改。" }
+                        ]
+                    },
+                    {
+                        id: "3-4",
+                        name: "3.4 字典 Dict (键值对与嵌套)",
+                        desc: "键值对关联存储与多层 JSON 式嵌套数据处理。",
+                        analogy: "💡 字典就像新华字典：通过查单词 Key 就能找到具体 Value。",
+                        keywords: ["print"],
+                        code: "user = {\n    'id': 1001,\n    'profile': {'name': 'Alice', 'role': 'Admin'}\n}\nprint('嵌套用户名:', user['profile']['name'])",
+                        lineByLine: [
+                            { code: "user['profile']['name']", explain: "多层读取嵌套字典中的数据。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：键 Key 唯一且不可变", content: "字典的 Key 必须是不可变类型（字符串/数字/元组），Value 可以是任意类型。" },
+                            { type: "error", title: "易错点：取不存在的 Key 导致 KeyError", content: "用 <code>dict[key]</code> 查不存在的键会崩溃，推荐用 <code>dict.get(key, default)</code> 安全查询。" }
+                        ],
+                        aiQuestions: [
+                            { q: "dict.get('a') 和 dict['a'] 有什么区别？", a: "如果 key 'a' 不存在，dict['a'] 会抛出 KeyError 异常程序崩溃；而 dict.get('a') 会安全返回 None。" }
+                        ]
+                    },
+                    {
+                        id: "3-5",
+                        name: "3.5 深拷贝与浅拷贝 (copy vs deepcopy)",
+                        desc: "理解 Python 对象引用与内存浅/深复制机制。",
+                        analogy: "💡 浅拷贝就像复制快捷方式，深拷贝则是复制一份独立的完整实体文件。",
+                        keywords: ["import", "print"],
+                        code: "import copy\n\noriginal = [[1, 2], [3, 4]]\nshallow = copy.copy(original)\ndeep = copy.deepcopy(original)\n\noriginal[0][0] = 999\nprint('浅拷贝受影响:', shallow[0][0])\nprint('深拷贝完全独立:', deep[0][0])",
+                        lineByLine: [
+                            { code: "copy.deepcopy()", explain: "完全复制所有层级的嵌套对象，互不干扰。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：浅拷贝只复制第一层", content: "嵌套列表在浅拷贝下依然共享内部对象的子内存地址。" },
+                            { type: "error", title: "易错点：用 = 赋值以为是拷贝", content: "<code>b = a</code> 只是增加了引用别名，修改 <code>b</code> 同样会修改 <code>a</code>！" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么时候必须使用 deepcopy？", a: "当处理多层嵌套的列表或字典，且希望副本与原本彻底隔离时使用。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "第 4 部分：自定义函数",
+                topics: [
+                    {
+                        id: "4-1",
+                        name: "4.1 定义与调用 (*args 与 **kwargs)",
+                        desc: "掌握函数定义、位置参数与不定长参数传递。",
+                        analogy: "💡 *args 像万能打包袋（装多出来的参数），**kwargs 像贴标签的礼物盒。",
+                        keywords: ["def", "return", "print"],
+                        code: "def custom_sum(*args):\n    total = sum(args)\n    return total\n\nprint('不定长参数求和:', custom_sum(1, 2, 3, 4))",
+                        lineByLine: [
+                            { code: "*args", explain: "允许函数接收任意数量的位置参数并打包为元组。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：*args (元组) 与 **kwargs (字典)", content: "<code>*args</code> 接收多余的位置参数，<code>**kwargs</code> 接收多余的关键字参数。" },
+                            { type: "error", title: "易错点：参数顺序放错", content: "函数参数标准定义顺序：<code>(普通位置参数, *args, 默认参数, **kwargs)</code>。" }
+                        ],
+                        aiQuestions: [
+                            { q: "*args 和 **kwargs 的星号可以写几个？", a: "单星号 * 打包为元组，双星号 ** 打包为字典。" }
+                        ]
+                    },
+                    {
+                        id: "4-2",
+                        name: "4.2 返回值与变量作用域 (global)",
+                        desc: "多返回值与局部作用域/全局作用域提升。",
+                        analogy: "💡 局部变量是房间内部用品，全局变量是公共区域的大牌匾。",
+                        keywords: ["def", "return", "print"],
+                        code: "count = 0\n\ndef increment():\n    global count\n    count += 1\n\nincrement()\nprint('全局变量 count:', count)",
+                        lineByLine: [
+                            { code: "global count", explain: "声明使用全局作用域中的 `count` 变量。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：LEGB 作用域查找规则", content: "局部 Local -> 嵌套 Enclosing -> 全局 Global -> 内置 Built-in。" },
+                            { type: "error", title: "易错点：UnboundLocalError", content: "在函数内未用 <code>global</code> 声明就试图修改外部全局变量引发错误。" }
+                        ],
+                        aiQuestions: [
+                            { q: "Python 函数可以返回多个值吗？", a: "可以！例如 return a, b，实际上是打包成一个元组 (a, b) 返回。" }
+                        ]
+                    },
+                    {
+                        id: "4-3",
+                        name: "4.3 匿名函数 lambda 与高阶函数",
+                        desc: "快速编写 lambda 配合 map(), filter(), sorted() 使用。",
+                        analogy: "💡 lambda 就像一次性快餐盒，用完即弃，轻量快捷。",
+                        keywords: ["lambda", "print"],
+                        code: "nums = [5, 2, 8, 1]\n# 按绝对值或简单逻辑排序\nsorted_nums = sorted(nums, key=lambda x: x)\nprint('排序后结果:', sorted_nums)",
+                        lineByLine: [
+                            { code: "lambda x: x", explain: "创建单行匿名函数，无需常规 `def` 定义。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：lambda 单行表达式", content: "语法：<code>lambda 参数: 表达式</code>，自动返回表达式计算结果。" },
+                            { type: "error", title: "易错点：在 lambda 中写复杂语句", content: "lambda 内部不能出现 <code>for</code>、<code>while</code> 或赋值语句。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么时候适合用 lambda？", a: "当需要传入一个简短的临时回调函数（如 sorted 排序 key）时使用。" }
+                        ]
+                    },
+                    {
+                        id: "4-4",
+                        name: "4.4 递归函数 (Recursive Function)",
+                        desc: "函数内部调用自身的算法思想与出口基准设计。",
+                        analogy: "💡 就像俄罗斯套娃，一层层拆开，直到遇到最里面的核心出口。",
+                        keywords: ["def", "return", "if", "print"],
+                        code: "def factorial(n):\n    if n == 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint('5 的阶乘:', factorial(5))",
+                        lineByLine: [
+                            { code: "if n == 1: return 1", explain: "递归出口条件，防止无限递归死循环。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：递归两大要素", content: "1. 递归基准出口 (Base Case)；2. 向出口逼近的递归调用。" },
+                            { type: "error", title: "易错点：栈溢出 RecursionError", content: "忘记写出口条件，导致无线调用超过默认 1000 层深度限制。" }
+                        ],
+                        aiQuestions: [
+                            { q: "怎么避免 RecursionError 报错？", a: "确保每一次递归调用时参数都在缩小并最终能命中基准出口条件。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "第 5 部分：模块与包",
+                topics: [
+                    {
+                        id: "5-1",
+                        name: "5.1 模块导入与常用标准库",
+                        desc: "探索 import 机制与 math, random, datetime 标准库。",
+                        analogy: "💡 模块就像专业工具箱，`import` 相当于把工具搬进车间中使用。",
+                        keywords: ["import", "print"],
+                        code: "import math\nimport random\n\nprint('圆周率:', math.pi)\nprint('1-100 随机数:', random.randint(1, 100))",
+                        lineByLine: [
+                            { code: "import math", explain: "导入 Python 内置的高级数学计算模块。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：import 导入原理", content: "导入时会执行模块文件内的代码，并将模块名放入当前命名空间。" },
+                            { type: "error", title: "易错点：循环导入 Circular Import", content: "A 模块 import B，B 模块又 import A，引发 <code>ImportError</code>。" }
+                        ],
+                        aiQuestions: [
+                            { q: "import math 和 from math import pi 有啥区别？", a: "前者需通过 math.pi 调用；后者可直接使用变量名 pi。" }
+                        ]
+                    },
+                    {
+                        id: "5-2",
+                        name: "5.2 第三方包 pip 与虚拟环境 venv",
+                        desc: "使用 pip 包管理工具与隔离开发环境 venv。",
+                        analogy: "💡 虚拟环境就像独立的工作套房，避免不同项目需要的包版本产生冲突。",
+                        keywords: ["import"],
+                        code: "# 在终端操作:\n# python -m venv venv\n# source venv/bin/activate\n# pip install requests\nprint('虚拟环境准备就绪')",
+                        lineByLine: [
+                            { code: "python -m venv venv", explain: "创建独立的虚拟环境目录。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：隔离全局依赖", content: "不同项目用各自的 venv，避免包版本升级冲突。" },
+                            { type: "error", title: "易错点：未激活虚拟环境直接 pip install", content: "包被安装到了系统全局 Python 目录下，导致隔离失效。" }
+                        ],
+                        aiQuestions: [
+                            { q: "requirements.txt 文件的作用？", a: "用来记录项目所依赖的所有第三方包及对应的版本号。" }
+                        ]
+                    },
+                    {
+                        id: "5-3",
+                        name: "5.3 工程目录结构初步",
+                        desc: "规范项目目录：src/, tests/, requirements.txt。",
+                        analogy: "💡 规范整洁的房间分门别类，把源代码、测试用例和配置文件分目录存放。",
+                        keywords: ["print"],
+                        code: "# 经典架构:\n# my_project/\n# ├── src/\n# ├── tests/\n# └── requirements.txt\nprint('规范项目目录规划设计')",
+                        lineByLine: [
+                            { code: "requirements.txt", explain: "记录项目依赖第三方库及其版本信息的文件。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：__init__.py 标识", content: "含有 <code>__init__.py</code> 的文件夹会被 Python 识别为可导入的 Package。" },
+                            { type: "error", title: "易错点：ModuleNotFoundError", content: "跨目录导入时，因路径未加进 <code>sys.path</code> 找不到模块。" }
+                        ],
+                        aiQuestions: [
+                            { q: "Python 如何查找导入的模块？", a: "依次在当前目录、环境变量 PYTHONPATH 以及标准库目录中检索。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 6,
+                title: "第 6 部分：文件与异常处理",
+                topics: [
+                    {
+                        id: "6-1",
+                        name: "6.1 文件读写与 with open 上下文管理",
+                        desc: "安全操作文件读写并自动释放资源。",
+                        analogy: "💡 with 就像自带自动关门器的房间，离开时自动把门带上，防止资源泄漏。",
+                        keywords: ["with", "print"],
+                        code: "# 上下文管理器安全文件写与读示例\ncontent = 'Cyber Studio Python 教程'\nprint('模拟写入并安全读取文件:', content)",
+                        lineByLine: [
+                            { code: "with open(...) as f:", explain: "with 能保证无论是否报错，操作完后文件都能被安全关闭。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：with open 自动关闭", content: "无需手动调用 <code>f.close()</code>，即使出现异常也会安全释放文件资源。" },
+                            { type: "error", title: "易错点：中文乱码 UnicodeDecodeError", content: "在 Windows 下未指定 <code>encoding='utf-8'</code> 导致读取乱码崩溃。" }
+                        ],
+                        aiQuestions: [
+                            { q: "文件打开模式 'r', 'w', 'a' 分别是什么意思？", a: "'r' 只读；'w' 覆盖写入；'a' 追加写入到文件末尾。" }
+                        ]
+                    },
+                    {
+                        id: "6-2",
+                        name: "6.2 JSON 与 CSV 数据格式解析",
+                        desc: "处理结构化 JSON 字符串与 CSV 数据存储。",
+                        analogy: "💡 JSON 是互联网通用的“外语”，负责不同系统之间传递交换数据。",
+                        keywords: ["import", "print"],
+                        code: "import json\n\ndata = {'name': 'Cyber', 'level': 99}\njson_str = json.dumps(data)\nprint('序列化后的 JSON 文本:', json_str)",
+                        lineByLine: [
+                            { code: "json.dumps()", explain: "把 Python 字典转换为标准 JSON 格式字符串。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：json.dumps vs json.loads", content: "<code>dumps</code> (字典转字符串)；<code>loads</code> (字符串解析为字典)。" },
+                            { type: "error", title: "易错点：JSON 单双引号搞错", content: "JSON 标准规范强制使用**双引号**，单引号 <code>{'a':1}</code> 解析会报 JSONDecodeError。" }
+                        ],
+                        aiQuestions: [
+                            { q: "json.dump 和 json.dumps 有什么区别？", a: "带 s 的 dumps 针对字符串内存转换；不带 s 的 dump 直接将数据写入文件句柄。" }
+                        ]
+                    },
+                    {
+                        id: "6-3",
+                        name: "6.3 异常捕获 (try / except / else / finally)",
+                        desc: "捕获运行时错误，提升代码健壮性。",
+                        analogy: "💡 try/except 就像给程序穿上安全防护服，遇到意外也不会直接崩溃挂掉。",
+                        keywords: ["try", "except", "print"],
+                        code: "try:\n    res = 10 / 0\nexcept ZeroDivisionError as e:\n    print('捕获到除以零异常:', e)\nfinally:\n    print('清理收尾动作')",
+                        lineByLine: [
+                            { code: "try:", explain: "包含可能会发生报错的代码。" },
+                            { code: "except ZeroDivisionError:", explain: "精确捕获特定类型的错误并执行救场方案。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：finally 必然执行", content: "无论是否发生异常，<code>finally</code> 块中的代码都保证会被执行。" },
+                            { type: "error", title: "易错点：盲目使用裸 except:", content: "<code>except:</code> 会吞掉键盘中断 (KeyboardInterrupt) 等所有错误，难以调试。" }
+                        ],
+                        aiQuestions: [
+                            { q: "try-except 里的 else 块什么时候触发？", a: "只有当 try 块中没有任何报错顺利执行完毕时，才会执行 else 块。" }
+                        ]
+                    },
+                    {
+                        id: "6-4",
+                        name: "6.4 调试基础与日志 logging",
+                        desc: "使用断言 assert 与系统级别 logging 日志跟踪。",
+                        analogy: "💡 logging 相当于飞机的“黑匣子”，把所有关键运行轨迹和警告记录在案。",
+                        keywords: ["import", "print"],
+                        code: "import logging\n\nlogging.basicConfig(level=logging.INFO)\nlogging.info('系统的运行日志输出')",
+                        lineByLine: [
+                            { code: "logging.info()", explain: "记录信息级别的日志，优于用 print 进行无序调试。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：日志 5 个级别", content: "DEBUG < INFO < WARNING < ERROR < CRITICAL。" },
+                            { type: "error", title: "易错点：生产环境滥用 print()", content: "无法控制级别与输出格式，应统一替换为 <code>logging</code> 模块。" }
+                        ],
+                        aiQuestions: [
+                            { q: "assert 断言语句的作用是什么？", a: "断言条件必须为真，否则立即抛出 AssertionError 终止执行，常用于内部逻辑校验。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 7,
+                title: "第 7 部分：面向对象编程 (OOP)",
+                topics: [
+                    {
+                        id: "7-1",
+                        name: "7.1 类与对象 (__init__ 构造方法)",
+                        desc: "理解面向对象抽象、实例化与属性绑定。",
+                        analogy: "💡 类 (class) 就像是建筑施工图纸，对象 (object) 就是根据图纸盖出来的真实房子。",
+                        keywords: ["class", "def", "print"],
+                        code: "class Robot:\n    def __init__(self, name):\n        self.name = name\n    def speak(self):\n        print(f'机器人 {self.name} 已就绪！')\n\nr = Robot('Cyber-01')\nr.speak()",
+                        lineByLine: [
+                            { code: "class Robot:", explain: "用 `class` 关键字声明一个全新的面向对象模板。" },
+                            { code: "def __init__(self, name):", explain: "构造方法，在实例化对象时自动被触发调用。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：self 的含义", content: "<code>self</code> 代表当前被创建的具体对象实例本身。" },
+                            { type: "error", title: "易错点：定义方法忘记写 self", content: "报错 <code>TypeError: speak() takes 0 positional arguments but 1 was given</code>。" }
+                        ],
+                        aiQuestions: [
+                            { q: "__init__ 方法是干什么的？", a: "它是类的构造方法，当通过类创建实例对象时，Python 会自动调用它初始化属性。" }
+                        ]
+                    },
+                    {
+                        id: "7-2",
+                        name: "7.2 面向对象三大特性 (封装、继承、多态)",
+                        desc: "通过继承复用代码，利用多态统一接口实现。",
+                        analogy: "💡 子类继承父类就像儿子遗传父亲的基因，同时还能拓展属于自己的独特技能。",
+                        keywords: ["class", "def", "print"],
+                        code: "class Animal:\n    def make_sound(self):\n        pass\n\nclass Dog(Animal):\n    def make_sound(self):\n        print('汪汪汪！')\n\ndog = Dog()\ndog.make_sound()",
+                        lineByLine: [
+                            { code: "class Dog(Animal):", explain: "Dog 类继承自 Animal 类，可以重写父类的方法。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：super() 调用父类", content: "子类重写方法时可用 <code>super().__init__()</code> 继承父类初始化逻辑。" },
+                            { type: "error", title: "易错点：多继承的 MRO 菱形问题", content: "复杂继承树下方法查找顺序按 C4-MRO 算法进行。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是面向对象的多态性？", a: "不同子类继承同一个父类并重写同一个方法后，可以用统一的调用方式展现不同的行为。" }
+                        ]
+                    },
+                    {
+                        id: "7-3",
+                        name: "7.3 类方法、静态方法与特殊魔术方法",
+                        desc: "@classmethod、@staticmethod 与 __str__/__len__。",
+                        analogy: "💡 魔术方法就像是给对象配置的默认快捷按键，触发特定的内建行为。",
+                        keywords: ["class", "def", "print"],
+                        code: "class Book:\n    def __init__(self, title):\n        self.title = title\n    def __str__(self):\n        return f'《{self.title}》'\n\nb = Book('Python 极客宝典')\nprint(b)",
+                        lineByLine: [
+                            { code: "def __str__(self):", explain: "当使用 print() 打印对象时，会自动输出这个方法返回的文本。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：@classmethod vs @staticmethod", content: "类方法首参为 <code>cls</code>；静态方法无隐式首参，相当于独立普通函数。" },
+                            { type: "error", title: "易错点：__str__ 必须返回字符串", content: "如果 <code>__str__</code> 返回了数字或 None，用 print(obj) 会报错 <code>TypeError</code>。" }
+                        ],
+                        aiQuestions: [
+                            { q: "__str__ 和 __repr__ 有什么区别？", a: "__str__ 追求给用户看的可读性；__repr__ 追求给开发者看的可重构精确性。" }
+                        ]
+                    },
+                    {
+                        id: "7-4",
+                        name: "7.4 @property 装饰器与私有变量",
+                        desc: "使用双下划线私有化属性与受保护的 Getter/Setter。",
+                        analogy: "💡 私有变量就像是家里的保险柜，需要通过特定的密码验证通道才能存取。",
+                        keywords: ["class", "def", "print"],
+                        code: "class Account:\n    def __init__(self):\n        self.__balance = 100  # 私有变量\n    @property\n    def balance(self):\n        return self.__balance\n\nacc = Account()\nprint('当前余额:', acc.balance)",
+                        lineByLine: [
+                            { code: "self.__balance", explain: "双下划线开头的变量会被隐藏，外部无法直接读取或乱改。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：双下划线私有化 __var", content: "Python 内部会触发名称伪装 (Name Mangling)，防止外部直接修改私有属性。" },
+                            { type: "error", title: "易错点：直接访问私有属性 AttributeError", content: "外部访问 <code>acc.__balance</code> 会直接报错，需提供 <code>@property</code> 读取器。" }
+                        ],
+                        aiQuestions: [
+                            { q: "@property 有什么好处？", a: "把方法伪装成普通属性调用，既能安全校验数据，又能像访问属性一样简洁。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 8,
+                title: "第 8 部分：Python 进阶特性",
+                topics: [
+                    {
+                        id: "8-1",
+                        name: "8.1 生成器 yield 与迭代器",
+                        desc: "使用 yield 惰性求值，节省大规模数据计算内存。",
+                        analogy: "💡 生成器就像按需吐出面包的机器，要吃一片吐一片，不用一次性做好堆满仓库。",
+                        keywords: ["def", "yield", "print"],
+                        code: "def my_generator():\n    yield 1\n    yield 2\n    yield 3\n\ngen = my_generator()\nfor val in gen:\n    print('生成器产出:', val)",
+                        lineByLine: [
+                            { code: "yield 1", explain: "产出数据并暂时挂起函数，下次调用时继续从这里往下执行。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：yield 惰性求值 (Lazy)", content: "只在调用 <code>next()</code> 时才计算并产出单条数据，极大节省内存占用。" },
+                            { type: "error", title: "易错点：生成器只能遍历一次", content: "生成器迭代完毕后指针耗尽，第二次 <code>for</code> 循环将不会输出任何内容！" }
+                        ],
+                        aiQuestions: [
+                            { q: "为什么第二次循环生成器时没有输出了？", a: "生成器是一次性消耗品，产出完最后一条数据后即耗尽，再次循环需要重新创建生成器对象。" }
+                        ]
+                    },
+                    {
+                        id: "8-2",
+                        name: "8.2 装饰器原理与高级用法",
+                        desc: "理解闭包原理，使用 @ 语法对现有函数无缝功能无侵入增强。",
+                        analogy: "💡 装饰器就像是给手机戴手机壳，不改变手机本身，就能增加防水防摔功能。",
+                        keywords: ["def", "print"],
+                        code: "def my_decorator(func):\n    def wrapper():\n        print('--> 函数执行前增加日志')\n        func()\n        print('--> 函数执行后收尾')\n    return wrapper\n\n@my_decorator\ndef say_hello():\n    print('Hello World!')\n\nsay_hello()",
+                        lineByLine: [
+                            { code: "@my_decorator", explain: "装饰器语法糖，自动把 say_hello 传递给装饰器包裹处理。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：装饰器核心本质", content: "接受函数作为参数，并返回增强后的新函数。" },
+                            { type: "error", title: "易错点：内层 wrapper 忘记接收 *args, **kwargs", content: "导致被装饰函数带参数时报错 <code>TypeError</code>。" }
+                        ],
+                        aiQuestions: [
+                            { q: "@functools.wraps 是干什么用的？", a: "保留被装饰函数的原始元数据（如函数名 __name__、文档注释 __doc__），防止丢失。" }
+                        ]
+                    },
+                    {
+                        id: "8-3",
+                        name: "8.3 上下文管理器协议 (__enter__ / __exit__)",
+                        desc: "自定义实现支持 with 语句的资源管理类。",
+                        analogy: "💡 就像舞台剧的幕布，开演自动拉开，谢幕自动落下。",
+                        keywords: ["class", "def", "with", "print"],
+                        code: "class ContextLogger:\n    def __enter__(self):\n        print('准备资源中...')\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        print('清理资源完成！')\n\nwith ContextLogger():\n    print('在上下文中安全运行核心逻辑')",
+                        lineByLine: [
+                            { code: "__enter__ 与 __exit__", explain: "只要实现这两个魔术方法，对象就能直接配合 `with` 关键字使用。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：__exit__ 的三个异常参数", content: "可接收异常类型、值与追踪栈，如果在 <code>__exit__</code> 中返回 <code>True</code> 可吞掉该异常。" },
+                            { type: "error", title: "易错点：__enter__ 忘记 return 资源", content: "<code>with obj as res:</code> 中的 <code>res</code> 是由 <code>__enter__</code> 的返回值决定的。" }
+                        ],
+                        aiQuestions: [
+                            { q: "除了写 class 怎么用更简单的方式写上下文管理器？", a: "可以使用 contextlib 模块中的 @contextmanager 装饰器结合 yield 实现。" }
+                        ]
+                    },
+                    {
+                        id: "8-4",
+                        name: "8.4 闭包与正则表达式 re",
+                        desc: "函数式编程闭包机制与 re 模块正则模式匹配提取。",
+                        analogy: "💡 正则表达式就像是“超级扫描仪”，能在茫茫文本大海中秒找特定格式信息。",
+                        keywords: ["import", "print"],
+                        code: "import re\n\ntext = '联系邮箱 support@studio.com 进行咨询'\nmatch = re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}', text)\nif match:\n    print('提取到的邮箱:', match.group())",
+                        lineByLine: [
+                            { code: "re.search()", explain: "使用正则表达式从字符串中搜索匹配符合要求的子串。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：原始字符串 r'...' ", content: "写正则时必须带前缀 <code>r</code>，防止反斜杠 <code>\\</code> 被 Python 转义解析。" },
+                            { type: "error", title: "易错点：re.match vs re.search 混淆", content: "<code>match</code> 强制从字符串**开头**匹配；<code>search</code> 会扫描整个字符串找到第一处匹配。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是闭包 (Closure)？", a: "内部函数引用了外部非全局变量，且外部函数把内部函数作为返回值返回，即形成了闭包。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 9,
+                title: "第 9 部分：并发与性能",
+                topics: [
+                    {
+                        id: "9-1",
+                        name: "9.1 多线程 threading 与多进程 multiprocessing",
+                        desc: "对比 GIL 锁限制、多线程 IO 密集型与多进程 CPU 密集型任务。",
+                        analogy: "💡 多线程像多个人在一个厨房搞协作，多进程像开辟了多个独立的独立厨房。",
+                        keywords: ["import", "print"],
+                        code: "import threading\n\ndef worker():\n    print('后台子线程正在运行')\n\nt = threading.Thread(target=worker)\nt.start()\nt.join()",
+                        lineByLine: [
+                            { code: "threading.Thread()", explain: "创建新线程并发执行耗时的网络或文件读写任务。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：GIL 全局解释器锁", content: "CPython 解释器同一时刻只允许一个线程执行字节码，因此多线程无法利用多核 CPU 算力。" },
+                            { type: "error", title: "易错点：CPU 密集型任务误用多线程", content: "线程频繁切换开销反而让 CPU 密集计算变得更慢，应改用多进程 multiprocessing。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是 GIL？它对多线程有什么影响？", a: "GIL 是 CPython 的锁，导致 Python 多线程只能并发无法利用多核并行，更适合 IO 密集型。" }
+                        ]
+                    },
+                    {
+                        id: "9-2",
+                        name: "9.2 异步 IO 入门 asyncio (async / await)",
+                        desc: "单线程下处理超大规模高并发连接的现代化方案。",
+                        analogy: "💡 异步 IO 像服务员点完单把订单交给后厨后，不用傻等，直接去服务下一桌客人。",
+                        keywords: ["async", "print"],
+                        code: "# 异步 IO 简单概念代码\nprint('asyncio 异步任务流调度引擎')",
+                        lineByLine: [
+                            { code: "async / await", explain: "声明非阻塞异步协程任务的现代化 Python 关键字。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：事件循环 Event Loop", content: "单线程下遇到 IO 挂起时自动让出 CPU 调度其他协程任务。" },
+                            { type: "error", title: "易错点：在 async 函数里调用阻塞代码", content: "使用了如 <code>time.sleep()</code> 阻塞同步代码，会导致整个事件循环彻底卡死！" }
+                        ],
+                        aiQuestions: [
+                            { q: "忘记在 async 函数调用前写 await 会怎样？", a: "它只会返回一个协程对象，不会真正开始运行该异步任务逻辑！" }
+                        ]
+                    },
+                    {
+                        id: "9-3",
+                        name: "9.3 性能分析思路 (避免过早优化)",
+                        desc: "使用 timeit 和 cProfile 进行程序运行性能瓶颈定位。",
+                        analogy: "💡 就像用秒表测试跑鞋，先找出跑得最慢的环节，再有的放矢做优化。",
+                        keywords: ["import", "print"],
+                        code: "import timeit\n\nelapsed = timeit.timeit('[x**2 for x in range(1000)]', number=1000)\nprint('1000次执行耗时(秒):', round(elapsed, 4))",
+                        lineByLine: [
+                            { code: "timeit.timeit()", explain: "精准测量一小段代码的平均运行耗时。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：用数据说话", content: "使用 <code>cProfile</code> 模块分析函数调用频次与耗时占比，定位真正的瓶颈。" },
+                            { type: "error", title: "易错点：盲目凭直觉过早优化", content: "牺牲了可读性却只提升了微秒级性能，得不偿失。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是算法时间复杂度 O(n)？", a: "衡量随数据量增长，程序运行所需时间增长趋势的数学表达式。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 10,
+                title: "第 10 部分：数据库与网络",
+                topics: [
+                    {
+                        id: "10-1",
+                        name: "10.1 SQLite 数据库与 sqlite3 模块",
+                        desc: "使用 Python 内置的轻量关系型数据库 SQLite 进行 CRUD。",
+                        analogy: "💡 SQLite 就像是一个保存在单文件里的超级 Excel 电子表格。",
+                        keywords: ["import", "print"],
+                        code: "import sqlite3\n\nconn = sqlite3.connect(':memory:')\ncursor = conn.cursor()\ncursor.execute('CREATE TABLE users (id INT, name TEXT)')\ncursor.execute('INSERT INTO users VALUES (1, \"Cyber\")')\nconn.commit()\n\ncursor.execute('SELECT * FROM users')\nprint('查询数据库结果:', cursor.fetchall())",
+                        lineByLine: [
+                            { code: "sqlite3.connect()", explain: "连接数据库文件（此处 `:memory:` 表示内存临时数据库）。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：事务提交 conn.commit()", content: "执行写操作 (INSERT/UPDATE/DELETE) 后必须提交事务，否则改动不会落盘保存！" },
+                            { type: "error", title: "易错点：SQL 注入风险", content: "用 f-string 拼接 SQL 命令极其危险！必须使用参数化绑定 <code>cursor.execute('SELECT * FROM t WHERE id=?', (user_id,))</code>。" }
+                        ],
+                        aiQuestions: [
+                            { q: "为什么必须用参数化查询而不是字符串拼接？", a: "参数化查询会自动转义特殊符号，能够完全防止黑客攻击注入恶意 SQL 指令。" }
+                        ]
+                    },
+                    {
+                        id: "10-2",
+                        name: "10.2 ORM 概念与 SQLAlchemy 简介",
+                        desc: "将数据库表映射为 Python 类对象（Object-Relational Mapping）。",
+                        analogy: "💡 ORM 就像是数据库的自动翻译官，让你用写 Python 代码的方式优雅操作数据库。",
+                        keywords: ["class", "print"],
+                        code: "# ORM 映射思想概念展示\nprint('ORM 能够避免直接手写繁琐的 SQL 语句')",
+                        lineByLine: [
+                            { code: "ORM", explain: "实现 Python 面向对象模型与数据库结构之间的自动映射。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：对象 - 数据表解耦", content: "数据表的一行记录对应 Python 的一个实例对象。" },
+                            { type: "error", title: "易错点：ORM N+1 查询性能陷阱", content: "在循环中频繁触发关联外键查询导致网络 IO 爆炸，应使用 <code>joinedload</code> 预加载。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是 ORM 的 N+1 查询问题？", a: "主表查 1 次拿到 N 条记录，遍历时又分别查了 N 次从表，共发送 N+1 次 SQL，极其影响性能。" }
+                        ]
+                    },
+                    {
+                        id: "10-3",
+                        name: "10.3 HTTP 请求 requests 与 Socket 编程",
+                        desc: "发送 GET/POST 请求获取网页以及 TCP 底层通信。",
+                        analogy: "💡 requests 就像是网购快递员，帮你在网络上传输并拉取远端网页数据。",
+                        keywords: ["import", "print"],
+                        code: "# 使用 requests 发送网络 API 请求\nprint('HTTP 请求与 Socket 底层通信处理流程')",
+                        lineByLine: [
+                            { code: "requests.get()", explain: "最流行的第三方网络 API 交互调用库。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：网络超时 timeout 设置", content: "发送 HTTP 请求务必设置 <code>timeout=5</code>，防止因目标网路死锁导致程序无休止卡死。" },
+                            { type: "error", title: "易错点：未检查响应状态码", content: "假设请求总是成功，直接解析 <code>res.json()</code> 在遇到 500/404 时崩溃。" }
+                        ],
+                        aiQuestions: [
+                            { q: "HTTP 状态码 200, 404, 500 分别代表什么？", a: "200 表示请求成功；404 表示未找到资源；500 表示服务器内部发生错误。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 11,
+                title: "第 11 部分：测试与工程化",
+                topics: [
+                    {
+                        id: "11-1",
+                        name: "11.1 单元测试 unittest / pytest",
+                        desc: "编写自动测试用例，断言代码功能的正确性。",
+                        analogy: "💡 单元测试相当于质检流水线，产出任何零件前先自动做一遍性能检测。",
+                        keywords: ["def", "print"],
+                        code: "def add(a, b):\n    return a + b\n\n# 断言测试\nassert add(2, 3) == 5\nprint('单元测试断言通过！')",
+                        lineByLine: [
+                            { code: "assert", explain: "断言表达式必须为真，否则抛出 AssertionError 表示测试未通过。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：测试用例独立性", content: "每个测试函数应该独立运行，不依赖其他测试函数的顺序或共享状态。" },
+                            { type: "error", title: "易错点：测试代码包含真实网络连接", content: "网络不可控会导致测试不稳定，应用 Mock 模拟外部服务返回值。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是 Mock 单元测试？", a: "用假的模拟对象替换不可控的外部依赖（如数据库、第三方 API 接口）。" }
+                        ]
+                    },
+                    {
+                        id: "11-2",
+                        name: "11.2 Git 基础、GitHub 与代码风格规范",
+                        desc: "版本控制 Git 指令与 flake8/black 自动代码美化。",
+                        analogy: "💡 Git 就像游戏里的存档点，随时可以回滚到以前任何一个写好的正常时刻。",
+                        keywords: ["print"],
+                        code: "# Git 常用命令:\n# git init\n# git commit -m 'feat: 新增登录功能'\nprint(' Git 版本控制与现代化工作流')",
+                        lineByLine: [
+                            { code: "git commit", explain: "保存当前项目状态快照。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：.gitignore 配置", content: "务必把 <code>.venv/</code>、密钥文件、缓存 <code>__pycache__/</code> 加入忽略列表。" },
+                            { type: "error", title: "易错点：将 API 密钥硬编码提交至仓库", content: "导致黑客扫描 GitHub 泄露账户，应使用环境变量读取敏感凭证。" }
+                        ],
+                        aiQuestions: [
+                            { q: "git pull 和 git fetch 有什么区别？", a: "git fetch 只拉取最新分支状态；git pull 等于 git fetch + git merge 合并改动。" }
+                        ]
+                    },
+                    {
+                        id: "11-3",
+                        name: "11.3 打包发布 (setup.py / pyproject.toml)",
+                        desc: "将自己的开源 Python 包打包并上传到 PyPI。",
+                        analogy: "💡 打包相当于给商品装上精致礼盒，打包后就能让全世界其他人用 `pip` 安装。",
+                        keywords: ["print"],
+                        code: "print('打包制作定制开源工具包并提交发布至 PyPI')",
+                        lineByLine: [
+                            { code: "pyproject.toml", explain: "现代 Python 项目打包构建的首选配置文件。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：Wheel (.whl) 格式", content: "现代 Python 预编译二进制构建包标准，安装速度极快。" },
+                            { type: "error", title: "易错点：忘写依赖项 install_requires", content: "他人通过 pip 安装你的包时，因缺少底层依赖库运行崩溃。" }
+                        ],
+                        aiQuestions: [
+                            { q: "如何把项目打包上传到 PyPI？", a: "编写 pyproject.toml 后，用 `python -m build` 构建包，并用 `twine upload` 安全上传。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 12,
+                title: "第 12 部分：方向专项 (选学)",
+                topics: [
+                    {
+                        id: "12-1",
+                        name: "A. Web 开发 (Flask / Django / FastAPI)",
+                        desc: "构建现代化后端 Web 服务、RESTful API 接口与数据库。",
+                        analogy: "💡 Web 框架就像是房屋的毛坯硬装，为你搭好了处理网络请求的核心骨架。",
+                        keywords: ["def", "print"],
+                        code: "# 极简微服务示例概念\nprint('启动后端 API 服务路由框架')",
+                        lineByLine: [
+                            { code: "FastAPI / Flask", explain: "Python 领域高并发与快速开发的首选 Web 框架。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：RESTful API 规范", content: "通过标准 HTTP 方法 (GET/POST/PUT/DELETE) 语义化操控资源。" },
+                            { type: "error", title: "易错点：生产环境开启 Debug 模式", content: "开启 debug=True 会暴露服务器内部堆栈和安全控制台，极具安全隐患。" }
+                        ],
+                        aiQuestions: [
+                            { q: "Flask 和 FastAPI 该怎么选？", a: "FastAPI 基于类型提示和 async，性能极高自带文档；Flask 简单轻量灵活适合中小项目。" }
+                        ]
+                    },
+                    {
+                        id: "12-2",
+                        name: "B. 数据分析 / AI (NumPy, Pandas, PyTorch)",
+                        desc: "使用 NumPy 矩阵计算、Pandas 数据清洗与人工智能初探。",
+                        analogy: "💡 Pandas 相当于给 Python 注入了处理千万级大数据的超级 Excel 引擎。",
+                        keywords: ["import", "print"],
+                        code: "print('进行数据清洗、矩阵运算与 AI 模型训练')",
+                        lineByLine: [
+                            { code: "Pandas / NumPy", explain: "数据科学与 AI 深度学习领域核心基础库。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：向量化计算 (Vectorization)", content: "底层由 C 语言加速，避免写慢速的 Python 原生 for 循环遍历矩阵。" },
+                            { type: "error", title: "易错点：对 DataFrame 使用 Python 循环", content: "用原生 for 循环遍历 Pandas 数据表性能极差，应尽量使用向量化算术函数。" }
+                        ],
+                        aiQuestions: [
+                            { q: "为什么 NumPy 比原生 Python 列表快成百上千倍？", a: "因为 NumPy 数组内存连续且类型单一，能直接利用 CPU 的 C 级优化与 SIMD 指令。" }
+                        ]
+                    },
+                    {
+                        id: "12-3",
+                        name: "C. 自动化与网络爬虫 (Requests + Scrapy)",
+                        desc: "自动化批处理办公文件与遵守道德规范的网络数据采集。",
+                        analogy: "💡 自动化爬虫相当于给浏览器配了一个 24 小时不间断工作的机器人助手。",
+                        keywords: ["import", "print"],
+                        code: "print('批量自动解析 HTML 网页元素并落库')",
+                        lineByLine: [
+                            { code: "BeautifulSoup / Scrapy", explain: "强大的网页标签解析与大规模分布式爬虫框架。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：请求头 User-Agent 伪装", content: "带上浏览器的 Headers 伪装身份，遵守 robots.txt 抓取协议。" },
+                            { type: "error", title: "易错点：高频请求导致 IP 被封禁", content: "未设置请求延迟与代理池，短时间大量访问触发表禁封。" }
+                        ],
+                        aiQuestions: [
+                            { q: "如何应对网页的动态 JavaScript 渲染数据？", a: "可以通过分析 Ajax 网络请求接口，或使用 Selenium/Playwright 自动化无头浏览器获取。" }
+                        ]
+                    },
+                    {
+                        id: "12-4",
+                        name: "D. 运维 / 脚本 (subprocess 与定时任务)",
+                        desc: "调用系统底层的操作系统命令与日志轮转运维任务。",
+                        analogy: "💡 运维脚本相当于操作系统的管家，自动定期打扫并监控机器运行状态。",
+                        keywords: ["import", "print"],
+                        code: "import subprocess\n\n# 调用系统底层命令\nres = subprocess.run(['echo', ' Cyber Script Engine'], capture_output=True, text=True)\nprint(res.stdout.strip())",
+                        lineByLine: [
+                            { code: "subprocess.run()", explain: "安全执行系统终端 Shell 命令的基础接口。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：subprocess 安全调用", content: "使用列表传参 <code>['ls', '-l']</code>，避免传单字符串。" },
+                            { type: "error", title: "易错点：设置 shell=True 导致命令注入", content: "如果拼接了不可信的用户输入，黑客能在你的服务器上执行任意删库指令！" }
+                        ],
+                        aiQuestions: [
+                            { q: "为什么不建议使用 os.system()？", a: "因为 os.system 无法方便地捕获命令的标准输出流，且缺乏高级安全参数控制。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 13,
+                title: "第 13 部分：综合项目实战",
+                topics: [
+                    {
+                        id: "13-1",
+                        name: "实战 1：命令行待办事项工具 (Todo App)",
+                        desc: "综合运用列表、函数与控制流实现一个迷你 Todo 工具。",
+                        analogy: "💡 结合之前学的所有拼木积木，组装成一套真正可运行的完整软件。",
+                        keywords: ["def", "for", "in", "print"],
+                        code: "tasks = []\n\ndef add_task(task_name):\n    tasks.append(task_name)\n    print(f'已添加任务: \"{task_name}\"')\n\ndef show_tasks():\n    print('\\n--- 你的待办清单 ---')\n    for idx, item in enumerate(tasks, 1):\n        print(f'{idx}. {item}')\n\nadd_task('完成 Python 13 章节学习')\nadd_task('打卡体验终端交互编辑')\nshow_tasks()",
+                        lineByLine: [
+                            { code: "tasks = []", explain: "创建一个空列表 `tasks` 用来保存所有的待办事项。" },
+                            { code: "for idx, item in ...", explain: "用 `for` 循环把列表里的待办任务逐条编号打印展示。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：模块化函数拆分", content: "将添加、删除、展示逻辑分别封装到独立的函数中。" },
+                            { type: "error", title: "易错点：删除序号越界 IndexError", content: "当删除输入序号超出 <code>len(tasks)</code> 范围时引发崩溃，需做边界校验。" }
+                        ],
+                        aiQuestions: [
+                            { q: "如何在程序退出后保存这些待办任务数据？", a: "可以在退出时用 json.dump 写入文件，程序启动时用 json.load 读取还原。" }
+                        ]
+                    },
+                    {
+                        id: "13-2",
+                        name: "实战 2：学生 / 图书管理系统 (OOP 项目)",
+                        desc: "利用面向对象类与封装继承实现结构化数据管理。",
+                        analogy: "💡 用封装思想把读者和图书抽象为独立的类，通过管理系统进行增删查改。",
+                        keywords: ["class", "def", "print"],
+                        code: "class Book:\n    def __init__(self, name):\n        self.name = name\n\nclass Library:\n    def __init__(self):\n        self.books = []\n    def add_book(self, book):\n        self.books.append(book)\n        print(f'图书《{book.name}》已上架')\n\nlib = Library()\nlib.add_book(Book('Python 极客之路'))",
+                        lineByLine: [
+                            { code: "class Library:", explain: "面向对象项目实战：用类组织图书馆的逻辑与存取数据。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：组合设计模式", content: "在 Library 类中包含 Book 类实例对象的列表组合。" },
+                            { type: "error", title: "易错点：类属性与实例属性混淆", content: "如果在类名下直接写 <code>books = []</code> 会导致所有 Library 实例共享同一份数据！" }
+                        ],
+                        aiQuestions: [
+                            { q: "类属性和实例属性有什么区别？", a: "类属性在类定义体内定义，所有对象共享；实例属性在 __init__ 中 self.x 定义，各对象独立。" }
+                        ]
+                    },
+                    {
+                        id: 13.3,
+                        id: "13-3",
+                        name: "实战 3：网页爬虫 + 数据落库 (SQLite)",
+                        desc: "从网络爬取结构化数据并自动保存至关系型数据库。",
+                        analogy: "💡 前端拉取 -> 解析数据 -> 批量写入数据库，一条龙打通完整数据流。",
+                        keywords: ["import", "def", "print"],
+                        code: "print('完成网页数据抓取并持久化保存至 SQLite 数据库')",
+                        lineByLine: [
+                            { code: "数据落库", explain: "将抓取到的内存数据持久化存储在磁盘数据库中。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：ETL 完整数据链路", content: "抽取 (Extract) -> 清洗转换 (Transform) -> 加载落库 (Load)。" },
+                            { type: "error", title: "易错点：数据库连接死锁", content: "爬虫异常时未在 <code>finally</code> 中关闭数据库游标连接致锁死。" }
+                        ],
+                        aiQuestions: [
+                            { q: "爬虫写入数据库时数据重复怎么办？", a: "可以在 SQLite 表中将 URL 或 ID 设定为 UNIQUE 唯一索引，配合 INSERT OR IGNORE 插入。" }
+                        ]
+                    },
+                    {
+                        id: "13-4",
+                        name: "实战 4：Flask 博客 / 接口服务构建",
+                        desc: "使用 Flask 开发完整的 Restful 风格 API 后端服务。",
+                        analogy: "💡 为前端应用提供标准 JSON 接口数据，实现前后端分离架构服务。",
+                        keywords: ["def", "return", "print"],
+                        code: "print('基于 Flask 搭建轻量级 Web 服务接口')",
+                        lineByLine: [
+                            { code: "RESTful API", explain: "现代化 Web 应用前后端交互的通用标准设计风格。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：jsonify 格式化返回", content: "将 Python 字典自动包装为带 <code>application/json</code> 头的 HTTP 响应。" },
+                            { type: "error", title: "易错点：跨域 CORS 访问拦截", content: "前端调用接口报 CORS 错误，需引入 <code>flask-cors</code> 解决限制。" }
+                        ],
+                        aiQuestions: [
+                            { q: "什么是 CORS 跨域问题？", a: "浏览器的同源策略出于安全限制，阻止网页向不同域名或端口的 API 发起请求。" }
+                        ]
+                    },
+                    {
+                        id: "13-5",
+                        name: "实战 5：自动化数据分析报表生成",
+                        desc: "读取 CSV 数据自动分析并一键导出可视化报表。",
+                        analogy: "💡 告别手动制作 Excel 表格，一键生成漂亮的自动化统计分析图表。",
+                        keywords: ["import", "print"],
+                        code: "print('读取原始日志，自动生成可视化分析统计图表与总结报表')",
+                        lineByLine: [
+                            { code: "数据自动化报表", explain: "极大地解放重复劳动力，实现办公自动化的核心实战之一。" }
+                        ],
+                        cheatsheet: [
+                            { type: "key", title: "核心重点：数据聚合 groupby", content: "快速按类别汇总数据指标并进行方差、均值计算。" },
+                            { type: "error", title: "易错点：读取大文件内存爆满", content: "超大 CSV 文件应用 Pandas 的 <code>chunksize</code> 参数分块分批读取处理。" }
+                        ],
+                        aiQuestions: [
+                            { q: "如何用 Python 自动定时每天生成一份报表？", a: "可以利用 schedule 模块或操作系统的 cron/Windows 任务计划程序定期触发脚本。" }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // 全局状态管理
+        let editor;
+        let currentTopic = curriculumData[0].topics[0];
+        let isAnimating = false;
+        let animationTimer = null;
+
+        // 初始化
+        document.addEventListener("DOMContentLoaded", () => {
+            editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+                mode: "python",
+                theme: "dracula",
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                styleActiveLine: true,
+                indentUnit: 4,
+                tabSize: 4
+            });
+
+            renderCurriculum();
+            renderDictionary();
+            loadTopic(curriculumData[0].topics[0]);
+        });
+
+        function renderCurriculum() {
+            const container = document.getElementById("curriculum-tree");
+            container.innerHTML = "";
+
+            curriculumData.forEach((chapter, index) => {
+                const group = document.createElement("div");
+                group.className = `chapter-group ${index === 0 ? "open active" : ""}`;
+                group.id = `chapter-${chapter.id}`;
+
+                const header = document.createElement("div");
+                header.className = "chapter-header";
+                header.onclick = () => toggleChapter(chapter.id);
+                header.innerHTML = `
+                    <div class="chapter-title">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <span>${chapter.title}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="font-size:0.7rem; color:var(--text-muted);"></i>
+                `;
+
+                const topicList = document.createElement("div");
+                topicList.className = "topic-list";
+
+                chapter.topics.forEach(topic => {
+                    const item = document.createElement("div");
+                    item.className = `topic-item ${topic.id === currentTopic.id ? "active" : ""}`;
+                    item.id = `topic-item-${topic.id}`;
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        loadTopic(topic);
+                    };
+                    item.innerHTML = `
+                        <span>${topic.name}</span>
+                        <i class="fa-solid fa-play" style="font-size:0.55rem; opacity:0.6;"></i>
+                    `;
+                    topicList.appendChild(item);
+                });
+
+                group.appendChild(header);
+                group.appendChild(topicList);
+                container.appendChild(group);
+            });
+        }
+
+        function toggleChapter(chapterId) {
+            const el = document.getElementById(`chapter-${chapterId}`);
+            if (el) el.classList.toggle("open");
+        }
+
+        function loadTopic(topic) {
+            if (isAnimating) stopAnimation();
+
+            currentTopic = topic;
+
+            // 1. 工作区主 Banner 更新
+            document.getElementById("current-title").innerHTML = `<i class="fa-solid fa-code" style="color:var(--accent-emerald);"></i> ${topic.name}`;
+            document.getElementById("current-desc").innerText = topic.desc;
+            document.getElementById("analogy-text").innerHTML = `<strong></strong> ${topic.analogy}`;
+
+            // 2. 核心关键词更新
+            const pillsBox = document.getElementById("keyword-pills");
+            pillsBox.innerHTML = "<span style='font-size:0.7rem; color:var(--text-muted);'>本节关键词:</span> ";
+            topic.keywords.forEach(kw => {
+                const tag = document.createElement("span");
+                tag.className = "keyword-tag";
+                tag.innerText = kw;
+                tag.onclick = () => openWordInDrawer(kw);
+                pillsBox.appendChild(tag);
+            });
+
+            // 3. 代码编辑器与逐行解析更新
+            editor.setValue(topic.code);
+            renderLineByLine(topic.lineByLine);
+
+            document.querySelectorAll(".topic-item").forEach(el => el.classList.remove("active"));
+            const activeItem = document.getElementById(`topic-item-${topic.id}`);
+            if (activeItem) activeItem.classList.add("active");
+
+            // 4. 控制台与变量监视器清空初始化
+            clearTerminal();
+            appendTerminal(`◆ 已切换至语法节点: [${topic.name}]`, "term-info");
+            updateVisualizerVars(topic.code);
+            updateProgress(topic.id);
+
+            // 5. 联动：速查、AI 助教、随堂笔记功能更新
+            renderTopicCheatsheet(topic);
+            renderTopicAiTutor(topic);
+            loadTopicNote(topic.id);
+        }
+
+        function renderLineByLine(lines) {
+            const box = document.getElementById("line-by-line-content");
+            box.innerHTML = "";
+            if (!lines || lines.length === 0) {
+                box.innerHTML = "<div style='font-size:0.75rem; color:var(--text-dim);'>暂无逐行拆解</div>";
+                return;
+            }
+            lines.forEach((item, idx) => {
+                const div = document.createElement("div");
+                div.className = "line-explain-item";
+                div.innerHTML = `
+                    <div style="margin-bottom:2px;">
+                        <span style="color:var(--text-dim); font-size:0.7rem;">Line ${idx + 1}:</span>
+                        <span class="line-code-snippet">${escapeHtml(item.code)}</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${item.explain}</div>
+                `;
+                box.appendChild(div);
+            });
+        }
+
+        // 动态渲染：与目录联动的“速查”
+        function renderTopicCheatsheet(topic) {
+            const container = document.getElementById("cheatsheet-content");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (!topic.cheatsheet || topic.cheatsheet.length === 0) {
+                container.innerHTML = `<div class="dictionary-card"><div class="dict-usage">当前章节暂无专项速查卡片。</div></div>`;
+                return;
+            }
+
+            topic.cheatsheet.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "dictionary-card";
+                const isError = item.type === "error";
+                const icon = isError ? "fa-triangle-exclamation" : "fa-key";
+                const color = isError ? "var(--accent-rose)" : "var(--accent-cyan)";
+                
+                card.innerHTML = `
+                    <div class="dict-meaning" style="color:${color}; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid ${icon}"></i> ${escapeHtml(item.title)}
+                    </div>
+                    <div class="dict-usage" style="border-left-color:${color}; margin-top:6px;">
+                        ${item.content}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 动态渲染：与目录联动的“AI 助教”
+        function renderTopicAiTutor(topic) {
+            const container = document.getElementById("ai-quick-questions");
+            if (!container) return;
+            container.innerHTML = "";
+
+            const topicTitleBox = document.getElementById("ai-topic-title");
+            if (topicTitleBox) {
+                topicTitleBox.innerText = `正在辅导：${topic.name}`;
+            }
+
+            if (topic.aiQuestions && topic.aiQuestions.length > 0) {
+                topic.aiQuestions.forEach((item) => {
+                    const btn = document.createElement("button");
+                    btn.className = "btn";
+                    btn.style.cssText = "width:100%; text-align:left; background:rgba(255,255,255,0.04); border:1px solid var(--border-color); color:var(--text-main); margin-bottom:6px; font-size:0.75rem; padding:8px 10px; border-radius:6px; cursor:pointer;";
+                    btn.innerHTML = `<i class="fa-regular fa-circle-question" style="color:var(--accent-cyan);"></i> ${escapeHtml(item.q)}`;
+                    btn.onclick = () => showAiAnswer(item.q, item.a);
+                    container.appendChild(btn);
+                });
+            }
+
+            const box = document.getElementById("ai-response-box");
+            if (box) box.style.display = "none";
+        }
+
+        function showAiAnswer(question, answer) {
+            const box = document.getElementById("ai-response-box");
+            box.style.display = "block";
+            box.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> AI 正在为您拆解难点...`;
+            setTimeout(() => {
+                box.innerHTML = `
+                    <div style="font-weight:700; color:var(--accent-emerald); margin-bottom:6px; border-bottom:1px dashed var(--border-color); padding-bottom:4px;">
+                        <i class="fa-solid fa-robot"></i> ${escapeHtml(question)}
+                    </div>
+                    <div>${answer}</div>
+                `;
+            }, 300);
+        }
+
+        function askCustomAi() {
+            const input = document.getElementById("ai-custom-input");
+            const query = input.value.trim();
+            if (!query) return;
+
+            const box = document.getElementById("ai-response-box");
+            box.style.display = "block";
+            box.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> AI 助教分析中...`;
+
+            setTimeout(() => {
+                let response = `关于在节点 <strong>[${currentTopic.name}]</strong> 中提到的问题 “${escapeHtml(query)}”：<br><br>`;
+                response += `💡 核心理解：在 Python 中处理该逻辑时，重点在于理清数据类型与控制流规范。如果出现报错，请优先检查语法拼写与空格缩进 (Indentation)。`;
+                box.innerHTML = `
+                    <div style="font-weight:700; color:var(--accent-emerald); margin-bottom:6px; border-bottom:1px dashed var(--border-color); padding-bottom:4px;">
+                        <i class="fa-solid fa-robot"></i> ${escapeHtml(query)}
+                    </div>
+                    <div>${response}</div>
+                `;
+                input.value = "";
+            }, 400);
+        }
+
+        // 替代勋章功能的“随堂笔记与错题本”持久化逻辑
+        function loadTopicNote(topicId) {
+            const textarea = document.getElementById("topic-note-input");
+            if (!textarea) return;
+            const saved = localStorage.getItem(`python_studio_note_${topicId}`);
+            textarea.value = saved || "";
+
+            const label = document.getElementById("note-topic-label");
+            if (label && currentTopic) {
+                label.innerText = `📝 笔记 - ${currentTopic.name}`;
+            }
+            updateNotesList();
+        }
+
+        function saveTopicNote() {
+            const textarea = document.getElementById("topic-note-input");
+            if (!textarea || !currentTopic) return;
+            const val = textarea.value.trim();
+            if (val) {
+                localStorage.setItem(`python_studio_note_${currentTopic.id}`, val);
+                alert(`已成功保存《${currentTopic.name}》的随堂笔记与错题记录！`);
+            } else {
+                localStorage.removeItem(`python_studio_note_${currentTopic.id}`);
+                alert("笔记已清空。");
+            }
+            updateNotesList();
+        }
+
+        function updateNotesList() {
+            const container = document.getElementById("saved-notes-list");
+            if (!container) return;
+            container.innerHTML = "";
+
+            let count = 0;
+            curriculumData.forEach(chapter => {
+                chapter.topics.forEach(t => {
+                    const note = localStorage.getItem(`python_studio_note_${t.id}`);
+                    if (note) {
+                        count++;
+                        const item = document.createElement("div");
+                        item.className = "dictionary-card";
+                        item.style.cursor = "pointer";
+                        item.onclick = () => {
+                            const topicToLoad = findTopicById(t.id);
+                            if (topicToLoad) loadTopic(topicToLoad);
+                        };
+                        item.innerHTML = `
+                            <div class="dict-meaning" style="color:var(--accent-amber); font-size:0.78rem;">
+                                📌 [${t.id}] ${escapeHtml(t.name)}
+                            </div>
+                            <div class="dict-usage" style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">
+                                ${escapeHtml(note.substring(0, 50))}${note.length > 50 ? '...' : ''}
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    }
+                });
+            });
+
+            if (count === 0) {
+                container.innerHTML = `<div style="font-size:0.72rem; color:var(--text-dim); text-align:center; padding:10px;">暂无已保存的随堂笔记/错题</div>`;
+            }
+        }
+
+        function findTopicById(id) {
+            for (const chapter of curriculumData) {
+                for (const t of chapter.topics) {
+                    if (t.id === id) return t;
+                }
+            }
+            return null;
+        }
+
+        function playDynamicAnimation() {
+            if (isAnimating) return;
+
+            isAnimating = true;
+            const btn = document.getElementById("btn-animate");
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 演示进行中...`;
+
+            clearTerminal();
+            appendTerminal(`◆ 正在逐行解构输入代码流程...`, "term-system");
+            switchTab('terminal');
+
+            const fullCode = currentTopic.code;
+            const lines = fullCode.split("\n");
+            
+            editor.setValue("");
+            let currentLineIndex = 0;
+
+            function typeNextLine() {
+                if (currentLineIndex >= lines.length) {
+                    stopAnimation();
+                    appendTerminal(`◆ 逐行演练完成！自动执行结果如下：`, "term-success");
+                    runPythonCode();
+                    return;
+                }
+
+                const lineText = lines[currentLineIndex];
+                const currentContent = editor.getValue();
+                const newContent = currentContent + (currentLineIndex === 0 ? "" : "\n") + lineText;
+                editor.setValue(newContent);
+                
+                editor.setCursor(currentLineIndex, lineText.length);
+                
+                if (lineText.trim().startsWith("#")) {
+                    appendTerminal(`[注释解构] ${lineText.trim()}`, "term-system");
+                } else if (lineText.includes("print(")) {
+                    appendTerminal(`[求值输出] 执行打印逻辑 -> Line ${currentLineIndex + 1}`, "term-info");
+                } else if (lineText.includes("=")) {
+                    appendTerminal(`[状态变更] 赋值变量更新 -> Line ${currentLineIndex + 1}: ${lineText.trim()}`, "term-success");
+                }
+
+                updateVisualizerVars(editor.getValue());
+                currentLineIndex++;
+                animationTimer = setTimeout(typeNextLine, 850);
+            }
+
+            typeNextLine();
+        }
+
+        function stopAnimation() {
+            isAnimating = false;
+            if (animationTimer) clearTimeout(animationTimer);
+            const btn = document.getElementById("btn-animate");
+            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> 动态输入与反馈演示`;
+        }
+
+        function runPythonCode() {
+            const code = editor.getValue();
+            clearTerminal();
+            appendTerminal(`─── 开始运行 Python 代码 ───`, "term-system");
+
+            let logs = [];
+            const customStdout = {
+                write: function(data) {
+                    if (data.trim() !== "") {
+                        logs.push(data);
+                        appendTerminal(data, "term-success");
+                    }
+                },
+                flush: function() {}
+            };
+
+            try {
+                let executed = false;
+                if (window.__BRYTHON__ && window.__BRYTHON__.stdlib) {
+                    window.__BRYTHON__.stdlib.sys.stdout = customStdout;
+                    try {
+                        window.__BRYTHON__.eval(code);
+                        executed = true;
+                    } catch(e) {}
+                }
+
+                if (!executed || logs.length === 0) {
+                    simulatePythonExecution(code);
+                }
+
+                document.getElementById("editor-status").innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--accent-emerald);"></i> 运行成功`;
+            } catch (err) {
+                appendTerminal(`[运行错误 Error]: ${err.message}`, "term-error");
+                document.getElementById("editor-status").innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-rose);"></i> 发生错误`;
+            }
+
+            updateVisualizerVars(code);
+        }
+
+        function simulatePythonExecution(code) {
+            const lines = code.split("\n");
+            const env = {};
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line || line.startsWith("#")) return;
+
+                if (line.includes("=") && !line.includes("==") && !line.startsWith("if") && !line.startsWith("print")) {
+                    const parts = line.split("=");
+                    if (parts.length === 2) {
+                        const varName = parts[0].trim();
+                        let varVal = parts[1].trim();
+                        if (varVal.startsWith("'") || varVal.startsWith('"')) {
+                            env[varName] = varVal.replace(/['"]/g, '');
+                        } else if (!isNaN(varVal)) {
+                            env[varName] = Number(varVal);
+                        } else {
+                            env[varName] = varVal;
+                        }
+                    }
+                }
+
+                if (line.startsWith("print(")) {
+                    let content = line.substring(6, line.lastIndexOf(")"));
+                    if (content.startsWith("f'") || content.startsWith('f"')) {
+                        content = content.substring(2, content.length - 1);
+                        content = content.replace(/\{([^}]+)\}/g, (m, p1) => {
+                            return env[p1.trim()] !== undefined ? env[p1.trim()] : p1;
+                        });
+                        appendTerminal(content, "term-success");
+                    } else {
+                        content = content.replace(/['"]/g, '');
+                        if (env[content] !== undefined) {
+                            appendTerminal(String(env[content]), "term-success");
+                        } else {
+                            appendTerminal(content, "term-success");
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateVisualizerVars(code) {
+            const grid = document.getElementById("variable-grid");
+            grid.innerHTML = "";
+
+            const varsFound = {};
+            const lines = code.split("\n");
+
+            lines.forEach(line => {
+                line = line.trim();
+                const match = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
+                if (match && !line.startsWith("if") && !line.startsWith("return")) {
+                    const name = match[1];
+                    let val = match[2];
+                    
+                    let type = "未定义";
+                    if (/^\d+$/.test(val)) type = "int (整数)";
+                    else if (/^\d+\.\d+$/.test(val)) type = "float (小数)";
+                    else if (/^['"].*['"]$/.test(val)) type = "str (字符串)";
+                    else if (val === "True" || val === "False") type = "bool (布尔)";
+                    else if (val.startsWith("[")) type = "list (列表)";
+                    else if (val.startsWith("{")) type = "dict (字典)";
+
+                    varsFound[name] = { val: val, type: type };
+                }
+            });
+
+            const keys = Object.keys(varsFound);
+            if (keys.length === 0) {
+                grid.innerHTML = `<div style="font-size:0.72rem; color:var(--text-dim);">当前代码段暂无显式局部变量赋值</div>`;
+                return;
+            }
+
+            keys.forEach(k => {
+                const item = varsFound[k];
+                const badge = document.createElement("div");
+                badge.className = "var-badge";
+                badge.innerHTML = `
+                    <span class="var-name">${k}</span>
+                    <span class="var-val">${escapeHtml(item.val)}</span>
+                    <span class="var-type">${item.type}</span>
+                `;
+                grid.appendChild(badge);
+            });
+        }
+
+        function toggleDrawer() {
+            const drawer = document.getElementById("drawer");
+            const overlay = document.getElementById("drawer-overlay");
+            drawer.classList.toggle("open");
+            overlay.classList.toggle("open");
+        }
+
+        function switchDrawerTab(tabKey) {
+            document.querySelectorAll(".drawer-tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelectorAll(".drawer-tab-pane").forEach(pane => pane.classList.remove("active"));
+
+            const eventTarget = event.target;
+            eventTarget.classList.add("active");
+            document.getElementById(`drawer-pane-${tabKey}`).classList.add("active");
+        }
+
+        function renderDictionary() {
+            const dictContainer = document.getElementById("dictionary-list");
+            dictContainer.innerHTML = "";
+
+            Object.keys(pythonGlossary).forEach(word => {
+                const info = pythonGlossary[word];
+                const card = document.createElement("div");
+                card.className = "dictionary-card";
+                card.id = `dict-card-${word}`;
+                card.innerHTML = `
+                    <div class="dict-word-row">
+                        <span class="dict-word">${word}</span>
+                        <span class="dict-pronounce">读音: ${info.pronounce}</span>
+                    </div>
+                    <div class="dict-meaning">💡 释义：${info.meaning}</div>
+                    <div class="dict-usage"><strong>用法：</strong> ${info.usage}</div>
+                `;
+                dictContainer.appendChild(card);
+            });
+        }
+
+        function openWordInDrawer(word) {
+            const drawer = document.getElementById("drawer");
+            const overlay = document.getElementById("drawer-overlay");
+            drawer.classList.add("open");
+            overlay.classList.add("open");
+
+            document.querySelectorAll(".drawer-tab-btn")[0].click();
+
+            const targetCard = document.getElementById(`dict-card-${word}`);
+            if (targetCard) {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetCard.style.borderColor = "var(--accent-emerald)";
+                targetCard.style.boxShadow = "0 0 12px rgba(16, 185, 129, 0.3)";
+                setTimeout(() => {
+                    targetCard.style.borderColor = "var(--border-color)";
+                    targetCard.style.boxShadow = "none";
+                }, 2500);
+            }
+        }
+
+        function appendTerminal(text, cls = "") {
+            const out = document.getElementById("terminal-out");
+            const div = document.createElement("div");
+            div.className = `term-line ${cls}`;
+            div.innerText = text;
+            out.appendChild(div);
+            out.scrollTop = out.scrollHeight;
+        }
+
+        function clearTerminal() {
+            document.getElementById("terminal-out").innerHTML = "";
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+            if (tabName === 'terminal') {
+                document.querySelectorAll(".tab-btn")[0].classList.add("active");
+                document.getElementById("tab-terminal").classList.add("active");
+            } else {
+                document.querySelectorAll(".tab-btn")[1].classList.add("active");
+                document.getElementById("tab-visualizer").classList.add("active");
+            }
+        }
+
+        function updateProgress(topicId) {
+            const parts = topicId.split("-");
+            const currentChapterNum = parseInt(parts[0], 10);
+            const percent = Math.min(100, Math.round((currentChapterNum / 13) * 100));
+            
+            document.getElementById("progress-fill").style.width = `${percent}%`;
+            document.getElementById("progress-text").innerText = `${currentChapterNum} / 13`;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function filterTopics() {
+            const query = document.getElementById("search-input").value.toLowerCase();
+            curriculumData.forEach(chapter => {
+                let hasMatch = false;
+                chapter.topics.forEach(topic => {
+                    const item = document.getElementById(`topic-item-${topic.id}`);
+                    if (topic.name.toLowerCase().includes(query) || topic.desc.toLowerCase().includes(query)) {
+                        if (item) item.style.display = "flex";
+                        hasMatch = true;
+                    } else {
+                        if (item) item.style.display = "none";
+                    }
+                });
+                const group = document.getElementById(`chapter-${chapter.id}`);
+                if (group) {
+                    if (hasMatch) {
+                        group.style.display = "block";
+                        group.classList.add("open");
+                    } else if (query !== "") {
+                        group.style.display = "none";
+                    } else {
+                        group.style.display = "block";
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
